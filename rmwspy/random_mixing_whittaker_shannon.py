@@ -22,7 +22,12 @@ from threading import Thread
 
 import spectralsim as Specsim
 import covariancefunction as covfun
-import nonlinobj
+try:
+	import nonlinobj
+except:
+	print('No non-linear object defined!')
+	print('Linear simulation only!')
+	import no_nonlinearobj as nonlinobj
 
 # class to update dictionaries
 class Bunch(object):
@@ -74,8 +79,6 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 		self.NL_cv = np.array(nl_cv)
 		self.nl_variables = nl_variables
 		
-		
-
 		if cp is None:
 			if len(self.domainsize) == 3:
 				self.cp = np.atleast_3d(np.array([])).reshape(0,3).astype('int')
@@ -112,7 +115,6 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 			self.ge_cp = np.array(ge_cp).astype('int')
 			self.ge_cv = np.array(ge_cv)
 
-
 		# simulate unconditional random fields as input for RMWS
 		if self.method == 'no_nl_constraints':
 			self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 500)), 5000))]
@@ -147,8 +149,7 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 			self.inv_covcond = np.linalg.inv(self.cov_cond)
 			self.cond_mu = np.tensordot(np.tensordot(cov12,np.linalg.inv(cov22),axes=1),self.cv,axes=1)
 
-	def __call__(self,):
-		
+	def __call__(self,):		
 		# loop over number of required conditional fields
 		for simno in range(0,self.nFields):
 
