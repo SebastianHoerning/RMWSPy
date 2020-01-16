@@ -28,7 +28,7 @@ except:
 import gcopula_sparaest as sparest
 import spectralsim as Specsim
 import covariancefunction as covfun
-import plot_paper
+
 
 def main():
 	# use random seed if you want to ensure reproducibility
@@ -240,6 +240,7 @@ def main():
 		# if fancy_paper_plot -> plots as in paper
 		# NOTE that some non-standard python modules are required
 		if fancy_paper_plot:
+			import plot_paper
 			plot_paper.plot_pp(datafolder, p_data, mwl_data, f_prec_fields, mwl_prec, boxlist, x, f_prec_fields.shape[0], tstep, rix)
 		else:
 			# basic plots
