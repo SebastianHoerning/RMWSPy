@@ -185,7 +185,7 @@ def main():
 	# fit a Gaussian copula -> spatial model
 	outputfile = None               			# if you want to specify an outputfile -> os.path.join(savefolder, 'MLM.sparaest')   
 	u = (st.rankdata(kh_obswell)-0.5)/kh_obswell.shape[0]   # observations in copula (rank) space
-	covmods = [['Mat'], ['Exp'], ['Sph'],]     # covariance function that will be tried for the fitting
+	covmods = ['Mat', 'Exp', 'Sph']     # covariance function that will be tried for the fitting
 	ntries = 6                                  # number of tries per covariance function with random subsets
 
 	cmods = sparest.paraest_multiple_tries(np.copy(obswell),
@@ -193,11 +193,6 @@ def main():
 										   ntries = [ntries,ntries],
 										   n_in_subset = 5,               # number of values in subsets
 										   neighbourhood = 'nearest',     # subset search algorithm
-										   vinv =    [                    # which v-copulas (nested) to be used (if 'g', then gaussian copula is used)
-												   ['g',],
-												   ['g',],
-												   ['g'],
-												   ],
 										   covmods = covmods,             # covariance functions
 										   outputfile = outputfile)       # store all fitted models in an output file
 
@@ -208,8 +203,8 @@ def main():
 		for tries in range(ntries):
 			if cmods[model][tries][1]*-1. > likelihood:
 				likelihood = cmods[model][tries][1]*-1.
-				cmod = '0.01 Nug(0.0) + 0.99 %s(%1.3f)'%(covmods[model][0], cmods[model][tries][0][0])
-				if covmods[model][0] == 'Mat':
+				cmod = '0.01 Nug(0.0) + 0.99 %s(%1.3f)'%(covmods[model], cmods[model][tries][0][0])
+				if covmods[model] == 'Mat':
 					cmod += '^%1.3f'%(cmods[model][tries][0][1])
 
 	print (cmod)
