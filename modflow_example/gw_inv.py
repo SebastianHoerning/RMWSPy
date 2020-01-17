@@ -62,8 +62,17 @@ def main():
 	# example name
 	nm = 'gw_inv'
 	
-	# define executable names and path to file
-	# add path to MODFLOW executable
+	'''
+ 	define executable names and path to file
+	add path to MODFLOW executable
+	MODFLOW reference:
+	Langevin, C.D., Hughes, J.D., Banta, E.R., Provost, A.M., 
+	Niswonger, R.G., and Panday, Sorab, 2019, 
+	MODFLOW 6 Modular Hydrologic Model version 6.1.0: 
+	U.S. Geological Survey Software Release, 12 December 2019, 
+	https://doi.org/10.5066/F76Q1VQV
+	'''
+
 	exe_loc = r''
 	mfexe = 'mf6.exe'
 	mfexe = os.path.join(exe_loc, mfexe)
