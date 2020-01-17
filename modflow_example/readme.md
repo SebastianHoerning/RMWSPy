@@ -1,0 +1,4 @@
+# Groundwater inversion example
+This example demonstrates the application of RMWSPy for a groundwater inversion example. Note that this example requires MODFLOW (preferably MODFLOW6; Langevin, C.D., Hughes, J.D., Banta, E.R., Provost, A.M., Niswonger, R.G., and Panday, Sorab, 2019, MODFLOW 6 Modular Hydrologic Model version 6.1.0: U.S. Geological Survey Software Release, 12 December 2019, https://doi.org/10.5066/F76Q1VQV) as well as flopy (Bakker, M., Post, V., Langevin, C. D., Hughes, J. D.,	White, J. T., Starn, J. J. and Fienen, M. N., 2016, Scripting MODFLOW Model Development Using Python and FloPy: Groundwater, v. 54, p. 733–739, doi:10.1111/gwat.12413).
+
+In the gw_inv.py script, the user has to adjust the path to flopy and to the MODFLOW executable (see lines 48ff and 65ff). Once the paths are set up, execute the gw_inv.py to run the example.
