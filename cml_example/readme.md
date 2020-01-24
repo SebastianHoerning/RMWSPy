@@ -2,7 +2,7 @@
 In order to run this example please execute the mwl_sim.py script. A more detailed explanation, in form of a 
 journal paper will be available soon.
 
-If using the option 'fancy_paper_plot=True' you need to install some non-standard Python modules:
+If using the option 'fancy_paper_plot=True' you'll need to install some non-standard Python modules:
 - xarray
 - netCDF4
 - cartopy
