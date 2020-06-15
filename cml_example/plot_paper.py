@@ -9,7 +9,7 @@ from netCDF4 import Dataset
 import bresenhamline as bresenhamline
 import matplotlib.ticker as ticker
 import pandas as pd
-import IPython
+
 
 
 def plot_RG(ax, p_data):
@@ -95,7 +95,7 @@ def plot_pp(datafolder, p_data, mwl_data, fields, mwl_prec, boxlist, x, count_si
     ax.set_xlabel('')
     ax.set_ylabel('')
     ax.set_title('')
-    fig.savefig(r'PC90-PC10_%s.png'%tstamp, bbox_inches='tight')
+    fig.savefig(r'PC90-PC10_%s.pdf'%tstamp, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -160,7 +160,7 @@ def plot_pp(datafolder, p_data, mwl_data, fields, mwl_prec, boxlist, x, count_si
     cbar = fig.colorbar(p, ax=[ax1, ax2, ax3], shrink=0.6, location='bottom')
     cbar.set_label('P [mm/h]')
     plt.subplots_adjust(wspace=0.05, bottom=0.3)              
-    fig.savefig(r'RF_MeanF_VR_%s.png'%tstamp, bbox_inches='tight')
+    fig.savefig(r'RF_MeanF_VR_%s.pdf'%tstamp, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -184,7 +184,7 @@ def plot_pp(datafolder, p_data, mwl_data, fields, mwl_prec, boxlist, x, count_si
     ax.set_xlabel('')
     ax.set_ylabel('')
     ax.set_title('')
-    fig.savefig(r'Std_%s.png'%tstamp, bbox_inches='tight')
+    fig.savefig(r'Std_%s.pdf'%tstamp, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -202,7 +202,7 @@ def plot_pp(datafolder, p_data, mwl_data, fields, mwl_prec, boxlist, x, count_si
     axb.yaxis.set_major_locator(ticker.MultipleLocator(tick_space))
     axb.set_yticklabels(np.arange(0,100,5))
     axb.plot( mwl_prec, x, 'x', c='red')
-    fig1.savefig(r'Boxplot_CMLobs_vs_CMLRF_%s.png'%tstamp, bbox_inches='tight')
+    fig1.savefig(r'Boxplot_CMLobs_vs_CMLRF_%s.pdf'%tstamp, bbox_inches='tight')
 
 
 
