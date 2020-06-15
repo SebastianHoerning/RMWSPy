@@ -8,7 +8,6 @@
 #-------------------------------------------------------------------------------
 import numpy as np
 import scipy.special
-import pylab as plt
 import warnings
 
 

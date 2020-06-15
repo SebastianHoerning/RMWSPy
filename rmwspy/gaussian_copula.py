@@ -8,14 +8,9 @@
 #-------------------------------------------------------------------------------
 
 import numpy as np
-import matplotlib.pylab as plt
-import os
-import scipy.stats as st
-import scipy.spatial
-import itertools
 import scipy.stats as st
 import numexpr
-import IPython
+
 
 
 def stdnormpdf(x):

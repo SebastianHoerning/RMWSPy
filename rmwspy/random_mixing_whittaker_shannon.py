@@ -10,33 +10,51 @@
 import os
 import sys
 import numpy as np
-import matplotlib
-import matplotlib.pylab as plt
 import scipy.stats as st
 import scipy.spatial as sp
 import itertools as it
-import IPython
-from queue import Queue, Empty
-import threading
-from threading import Thread
-
 import spectralsim as Specsim
 import covariancefunction as covfun
-try:
-	import nonlinobj
-except:
-	print('No non-linear object defined!')
-	print('Linear simulation only!')
-	import no_nonlinearobj as nonlinobj
 
-# class to update dictionaries
 class Bunch(object):
 	def __init__(self, adict):
 		self.__dict__.update(adict)
+
+class NonLinearProblemTemplate(object):
+	"""
+	Template for nonlinear problem definition
+	"""
+
+	def objective_function(self, prediction):
+		"""
+		Overwrite this function to define the objective function.
+		"""
+		raise NotImplementedError
+
+	def allforwards(self, fields):
+		"""
+		Default excecution of all forward models.
+		Overwrite this function for threading or MPI evaluation.
+		"""
+		out = []
+		for k in range(len(fields.shape[0])):
+			out.append(self.forward(fields[k]))
+	
+	def forward(self, field):
+		"""
+		Overwrite this function to define the forward model.
 		
-# Random Mixing using Whittaker-Shannon interpolation
-class RMWSCondSim(nonlinobj.NonLinearClass):
+		:param field: realization of physical properties in standard normal
+		:type field: numpy array
+		:rtype: numpy array
+		:returns: values of prediction 
+		"""
+		raise NotImplementedError
+		
+
+class RMWS(object):
 	def __init__(self,
+				 nonlinearproblem,
 				 domainsize=(50,50),           # domainsize
 				 covmod='0.01 Nug(0.0) + 0.99 Exp(3.5)',     # spatial covariance model
 				 nFields=10,                # number of fields to simulate
@@ -45,21 +63,18 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 				 le_cp=None,                # <= inequality conditioning point coordinates
 				 le_cv=None,                # <= inequality conditioning point values
 				 ge_cp=None,                # >= inequality conditioning point coordinates
-				 ge_cv=None,                # >= inequality conditioning point values  
-				 nl_cp=None,                # non-linear constraint coordinates
-				 nl_cv=None,                # non-linear constraint values
-				 nl_variables=None,                
+				 ge_cv=None,                # >= inequality conditioning point values                 
 				 optmethod='no_nl_constraints', # optimization method: 'circleopt' or 'no_nl_constraints'
 				 p_on_circle=8,				# discretization for the circle
 				 minObj=None,               # stopping criteria: min objective function value
 				 maxiter=None,              # maximum number of iterations for optimization
 				 maxbadcount=10,            # max number of consecutive iteration with less than frac_imp -> stopping criteria
 				 frac_imp=0.9975,           # 0.25%
-				 multithreading=False,		# if True: use threading for parallelization
-				 n_threads=4,				# if multithreading use n_threads in parallel
-				 memory=False,              # if True: use a memory efficient approach (slower!!)
 
 				 ):
+
+		assert isinstance(nonlinearproblem, NonLinearProblemTemplate)
+		self.nonlinearproblem = nonlinearproblem
 
 		self.domainsize = list(domainsize)
 		self.nFields = nFields
@@ -68,16 +83,9 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 		self.method = optmethod
 		self.minObj = minObj
 		self.maxiter = maxiter
-		self.memory = memory
 		self.maxbadcount = maxbadcount
 		self.frac_imp = frac_imp
-		self.multithreading = multithreading
-		self.n_threads = n_threads
 		self.p_on_circle = p_on_circle
-
-		self.NL_cp = np.array(nl_cp)
-		self.NL_cv = np.array(nl_cv)
-		self.nl_variables = nl_variables
 		
 		if cp is None:
 			if len(self.domainsize) == 3:
@@ -151,7 +159,7 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 
 	def __call__(self,):		
 		# loop over number of required conditional fields
-		for simno in range(0,self.nFields):
+		for simno in range(0, self.nFields):
 
 			#print(simno)
 
@@ -201,34 +209,41 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 							'numberCondPoints':numberCondPoints, 
 							'index_gen':index_gen
 						}
+
+			# transform dict to object
+			homogargs = Bunch(homogargs)
+
+			# generate first set of homogeneous fields and add to object
 			homogargs = self.generate_homogeneous_fields(homogargs)
 
 			# this is RM without non-linear constraints
 			if self.method == 'no_nl_constraints':
 				args = {'homogargs':homogargs}
+				args = Bunch(args)
+
 				finalField = self.getFinalField(self.noNLconstraints, args)
 			
 			# with non-linear constraints use RMWS
 			elif self.method == 'circleopt':
 				# dict for the non-linear constraints   
-				nlConstraints = {   'nlcp':self.NL_cp, 
-									'nlcv':self.NL_cv, 
-									'nlFunc':self.forwardmodel, 
-									'counter':0, 
-									'objFunc':self.objFunc, 
-									'objmin':self.minObj, 
-								}
-			  
+				nlvar = {   'counter':0,  
+							'objmin':self.minObj, 
+								}			  
+				nlvar = Bunch(nlvar)
+
 				# dict for Whittaker-Shannon
 				circlevars = {  'discr':self.p_on_circle, 
 								'usf':60
 							 }
+				circlevars = Bunch(circlevars)
 
 				# dict that combines all other dicts
 				args = {    'homogargs':homogargs, 
-							'nlConstraints':nlConstraints, 
+							'nlvar':nlvar, 
 							'circlevars':circlevars
 						}
+				args = Bunch(args)
+
 
 				finalField, updatedargs = self.getFinalField(self.circleopt, args)
 
@@ -314,8 +329,7 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 		s = np.sum((c/S)*V.T[:,:S.shape[0]],axis=1)
 		return (s, norm_inner, n)
 
-	def add_uncondFields(self,nF=[100]):
-	
+	def add_uncondFields(self,nF=[100]):	
 		addField = np.empty(nF + self.domainsize, dtype=('float32'))
 		for i in range(nF[0]):
 			s = self.spsim.simnew()
@@ -335,7 +349,7 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 
 		return (ix, jx)
 
-	def sim_uncondFields(self,nF=[100]):
+	def sim_uncondFields(self, nF=[100]):
 		uncondFields = np.empty(nF + self.domainsize, dtype=('float32'))
 		for i in range(nF[0]):
 			s = self.spsim.simnew()
@@ -364,15 +378,11 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 			else:
 				yield res
 
-	def solve_homog_eqs(self, homogargs):
-		x = homogargs
+	def solve_homog_eqs(self, x):
 		n = x.numberCondPoints + x.dof
 
-		if self.memory:
-			selectedFields = self.sim_uncondFields(nF=[n])
-		else:
-			indx = next(x.index_gen)
-			selectedFields = self.uncondFields[indx]
+		indx = next(x.index_gen)
+		selectedFields = self.uncondFields[indx]
 		
 		A = self.get_at_cond_locations(selectedFields, self.cp_total)
 		Alhs = A[:x.numberCondPoints, :x.numberCondPoints]
@@ -384,29 +394,25 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 		solidd = np.hstack((sol,idd))
 		betas_norm = self.normalize_homogweights(solidd.flatten())
 		homogfield = self.calc_field(betas_norm, selectedFields)
-
 		return homogfield
 
-	def generate_homogeneous_fields(self, homogargs):
-		x = Bunch(homogargs)
+	def generate_homogeneous_fields(self, x):
 		homogFields = []
 		for i in range(x.numberHomogFields):
 			homogfield = self.solve_homog_eqs(x)
 			homogFields.append(homogfield)
 		homogFields = np.array(homogFields)
-		homogvariables = {'homogfields':homogFields}
-		homogargs.update(homogvariables)
-		return homogargs
+		x.homogfields = homogFields
+		return x
 
 	def noNLconstraints(self, args):
-		args = Bunch(args)
-		hargs = Bunch(args.homogargs)
+		hargs = args.homogargs
 		klam = (1.- self.norm_inner)**0.5
 		finalField = self.inner_field + klam*hargs.homogfields[0]
 		return finalField
 
 	def normalize_homogweights(self, weights):  
-		betas = weights/np.dot(weights,weights)**0.5
+		betas = weights/np.dot(weights,weights)**0.5		
 		return betas
 
 	def filter_indicies(self, n):
@@ -425,28 +431,22 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 		xsample = np.array((np.cos(t_s),np.sin(t_s)))
 		return xsample
 
-	# def get_nlfield_at_samplepoints(self, i, x, nlargs, hargs):
-	# 	homogfield = self.calc_field(x, hargs.homogfields)
-	# 	normField = self.normalize_with_innerField(homogfield)
-	# 	nlfield = nlargs.nlFunc(i, normField)
-	# 	return nlfield
-
-	def get_nlfield_at_samplepoints(self, i, x, nlargs, hargs):
+	def get_normfield_at_samplepoints(self, i, x, hargs):
 		homogfield = self.calc_field(x, hargs.homogfields)
 		normField = self.normalize_with_innerField(homogfield)
-		nlfield = nlargs.nlFunc(i, normField)
-		self.nlvals[i] = nlfield
+		return normField
 		
-
 	def normalize_with_innerField(self, homogfield):
 		klam = (1.- self.norm_inner)**0.5                
 		normField = self.inner_field + klam*homogfield
 		return normField
 
 	def circleopt(self, args):
-		cargs = Bunch(args['circlevars'])
-		nlargs = Bunch(args['nlConstraints'])
-		hargs = Bunch(args['homogargs'])
+		cargs = args.circlevars
+		nlargs = args.nlvar
+		hargs = args.homogargs
+
+		# because from here only one new field is required
 		hargs.numberHomogFields = 1
 
 		xsample = self.get_samplepoints_on_circle(cargs.discr)
@@ -458,29 +458,22 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 
 		while notoptimal:
 			nlargs.counter += 1 
-			self.nlvals = np.empty((xsample.shape[1], self.NL_cv.shape[0]))
-			if self.multithreading:				
-				pool = ThreadPool(self.n_threads)
-				for i,x in enumerate(xsample.T[:-1]):
-					pool.add_task(self.get_nlfield_at_samplepoints, i, x, nlargs, hargs)
-				pool.wait_completion()
 
-				self.nlvals[-1] = self.nlvals[0]
-				#nlvals = np.copy(self.nlvals)
-			else:        
-				# loop over the samplepoints on the cirle
-				# only up to [:-1] as we don't need to
-				# calculate the last one because it is the same
-				# as the first one
-				for i,x in enumerate(xsample.T[:-1]):
-					# and calculate the nonlinear conditions
-					self.get_nlfield_at_samplepoints(i, x, nlargs, hargs)
-				# add the first one which is the same as the last (cyclic, i.e. same angle) 
-				self.nlvals[-1] = self.nlvals[0]
+			normFields = []
+			for i,x in enumerate(xsample.T[:-1]):
+				# calculate all normalized fields at samplepoints
+				normFields.append(self.get_normfield_at_samplepoints(i, x, hargs))
+			normFields = np.array(normFields)
+
+			# call the forward model using the normalized fields
+			self.nlvals = self.nonlinearproblem.allforwards(normFields)
+
+			# add the first one which is the same as the last (cyclic, i.e. same angle) 
+			self.nlvals = np.vstack((self.nlvals, self.nlvals[-1]))
 		
 			# interpolate values from samplepoints on the circle using Whittaker-Shannon interpolation        
 			intp_nlvals = []
-			for nlv in range(len(nlargs.nlcv)):
+			for nlv in range(len(self.nonlinearproblem.data)):
 				# wrap it around from -2pi to 4pi to avoid funny boundary effects
 				x = self.nlvals[:,nlv]
 				x = np.concatenate(((x[:-1]),x))
@@ -489,18 +482,20 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 				intp_nlvals.append(np.array(intp_nlval))
 			intp_nlvals = np.array(intp_nlvals).T
 	 
-			# get interpolated objective function
-			objinter = nlargs.objFunc(intp_nlvals, nlargs.nlcv)
+			# get objective function from interpolated values
+			objinter = self.nonlinearproblem.objective_function(intp_nlvals)
+
 			# find optimal solution from interpolated objective function
 			ix = np.where(objinter == objinter.min())[0][0]
 			xsopt = np.array((np.cos(circlediscr[ix]),np.sin(circlediscr[ix])))
-			# and run the 'model' for those weights again to obtain
-			# the real objective function value
-			# NOTE that this overwrites self.nlvals[0] as i=0
-			self.get_nlfield_at_samplepoints(0, xsopt, nlargs, hargs)      
+
+			# and run the forward model for these weights again to obtain
+			# the real (non-interpolated) objective function value
+			normField = self.get_normfield_at_samplepoints(0, xsopt, hargs) 
+			opt_nlvals = self.nonlinearproblem.allforwards(normField.reshape((1, ) + normField.shape))     
 			
 			# real objective function value at the optimal angle
-			curobj = nlargs.objFunc(self.nlvals[0], nlargs.nlcv)
+			curobj = self.nonlinearproblem.objective_function(opt_nlvals)
 			print('\r', curobj, end='')
 			sys.stdout.flush()
 
@@ -512,15 +507,19 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 
 				obj = curobj
 				curhomogfield = self.calc_field(xsopt, hargs.homogfields)
-				normfield = self.normalize_with_innerField(curhomogfield)        
+				normfield = self.normalize_with_innerField(curhomogfield)    
 
-				hargs = Bunch(self.generate_homogeneous_fields(hargs.__dict__))
-				hargs.homogfields = np.array((curhomogfield,hargs.homogfields[0]))
+				# create new field
+				hargs = self.generate_homogeneous_fields(hargs)	
+				# add current best			
+				hargs.homogfields = np.array((curhomogfield, hargs.homogfields[0]))
+
 			else:
 				badcount += 1
+				# no improvement so stick to previous best and a new one
 				curhomogfield = hargs.homogfields[0]
-				hargs = Bunch(self.generate_homogeneous_fields(hargs.__dict__))
-				hargs.homogfields = np.array((curhomogfield,hargs.homogfields[0]))
+				hargs = self.generate_homogeneous_fields(hargs)
+				hargs.homogfields = np.array((curhomogfield, hargs.homogfields[0]))
 
 			# check whether objective function is smaller than predefined minimum
 			if obj < nlargs.objmin:
@@ -538,12 +537,10 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 				notoptimal = False  
 				finalField = self.normalize_with_innerField(curhomogfield)
 				print('\n Too small improvements in last %i consecutive iterations! --> Take current best solution!'%badcount)
-
-		updatedargs = self.unbunch_args(nlargs, hargs, cargs)
 		
-		return finalField, updatedargs
+		return finalField, args
 
-	def dofftint(self,usf,x):
+	def dofftint(self, usf, x):
 		n = x.shape[0] 
 		res = np.fft.fft(x)
 
@@ -561,7 +558,7 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 
 		return ans
 
-	def pdf_gauss_ineq(self,x):
+	def pdf_gauss_ineq(self, x):
 		dim = self.cov_cond.shape[0]
 		pdf = -0.5 * (np.sum(np.tensordot(x-self.cond_mu, self.inv_covcond,axes=1)*(x-self.cond_mu)))
 		maxl = 500
@@ -570,68 +567,3 @@ class RMWSCondSim(nonlinobj.NonLinearClass):
 
 		return np.exp(pdf)
 
-	def unbunch_args(self, *args):
-		try:
-			args = {'nlargs':args[0].__dict__, 'hargs':args[1].__dict__, 'cargs':args[2].__dict__}
-		except:
-			args = {'nlargs':args[0].__dict__, 'hargs':args[1].__dict__}
-		return args
-
-
-
-
-class Worker(Thread):
-    _TIMEOUT = 2
-
-    def __init__(self, tasks, th_num):
-        Thread.__init__(self)
-        self.tasks = tasks
-        self.daemon, self.th_num = True, th_num
-        self.done = threading.Event()
-        self.start()
-
-    def run(self):       
-        while not self.done.is_set():
-            try:
-                func, args, kwargs = self.tasks.get(block=True,
-                                                   timeout=self._TIMEOUT)
-                try:
-                    func(*args, **kwargs)
-                except Exception as e:
-                    print(e)
-                finally:
-                    self.tasks.task_done()
-            except Empty as e:
-                pass
-        return
-
-    def signal_exit(self):
-        self.done.set()
-
-
-class ThreadPool:
-    def __init__(self, num_threads, tasks=[]):
-        self.tasks = Queue(num_threads)
-        self.workers = []
-        self.done = False
-        self._init_workers(num_threads)
-        for task in tasks:
-            self.tasks.put(task)
-
-    def _init_workers(self, num_threads):
-        for i in range(num_threads):
-            self.workers.append(Worker(self.tasks, i))
-
-    def add_task(self, func, *args, **kwargs):
-        self.tasks.put((func, args, kwargs))
-
-    def _close_all_threads(self):
-        for workr in self.workers:
-            workr.signal_exit()
-        self.workers = []
-
-    def wait_completion(self):
-        self.tasks.join()
-
-    def __del__(self):
-        self._close_all_threads()

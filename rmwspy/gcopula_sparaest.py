@@ -16,7 +16,7 @@ import scipy.optimize as opt
 import datetime
 import covariancefunction as variogram
 import gaussian_copula as thcopula
-import IPython
+
 
 def paraest_multiple_tries(
                 x,                          # coordinates [n x d]

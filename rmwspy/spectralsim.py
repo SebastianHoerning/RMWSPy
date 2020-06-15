@@ -7,14 +7,9 @@
 # Created:     02.05.2018, Centre for Natural Gas, EAIT,
 #                          The University of Queensland, Brisbane, QLD, Australia
 #-------------------------------------------------------------------------------
-import os
+
 import numpy as np
-import scipy.stats as st
-import scipy.spatial as sp
-import matplotlib.pyplot as plt
 import covariancefunction as covfun
-
-
 
 class spectral_random_field(object):
     def __init__(self,
