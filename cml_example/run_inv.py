@@ -185,7 +185,7 @@ for tstep in range(start_time_idx, end_time_idx):
 			 le_cp = lecp,
 			 le_cv = lecv,
 			 optmethod = 'circleopt',
-			 minObj = 0.2,    
+			 minObj = 0.3,    
 			 maxiter = 200,
 			 )
 
@@ -226,7 +226,7 @@ for tstep in range(start_time_idx, end_time_idx):
 	# random index for plotting single realization
 	rix = np.random.randint(0, f_prec_fields.shape[0], 1)
 
-	if fancy_paper_plot:
+	if paperstyle_plot:
 		import plot_paper
 		plot_paper.plot_pp(datafolder, p_data, mwl_data, f_prec_fields, mwl_prec, boxlist, x, f_prec_fields.shape[0], tstep, rix)
 	else:
