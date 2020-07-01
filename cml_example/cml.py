@@ -13,10 +13,10 @@ class CMLModel(NonLinearProblemTemplate):
 		self.cmllinks = cmllinks     
 		
 	def objective_function(self, prediction):
-		if prediction.ndim == 1:
-			return np.mean((self.data - prediction)**2)**0.5
-		elif prediction.ndim == 2:
-			return np.mean((self.data - prediction)**2, axis=1)**0.5
+		# if prediction.ndim == 1:
+		# 	return np.mean((self.data - prediction)**2)**0.5
+		# elif prediction.ndim == 2:
+		return np.mean((self.data - prediction)**2, axis=1)**0.5
 	
 	def allforwards(self, fields):	
 		out = np.empty((fields.shape[0], self.data.shape[0]))
