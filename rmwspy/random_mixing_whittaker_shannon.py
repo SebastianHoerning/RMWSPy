@@ -127,11 +127,11 @@ class RMWS(object):
 		if self.method == 'no_nl_constraints':
 			self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 500)), 5000))]
 		elif self.method == 'circleopt':
-			self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 5000)), 12000))]  
+			self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 10000)), 15000))]  
 		else:
 			raise Exception('Wrong method!')
 			
-		self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 5000)), 10000))]
+		# self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 5000)), 10000))]
 		self.spsim = Specsim.spectral_random_field(domainsize=self.domainsize, covmod=self.covmod)      
 		self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 		for i in range(self.n_uncondFields[0]):
@@ -273,7 +273,7 @@ class RMWS(object):
 			ineq_fulfilled = False
 			while ineq_fulfilled == False:
 				can = np.copy(self.ineq_cv)
-				can += np.random.uniform(-0.01,0.01,can.shape[0])
+				can += np.random.uniform(-0.01, 0.01, can.shape[0])
 				# check that values are within the valid truncated distribution
 				if (((can[:self.ge_cv.shape[0]] > self.ge_cv).all()) & ((can[self.ge_cv.shape[0]:] < self.le_cv).all())):
 					ineq_fulfilled = True
@@ -311,7 +311,7 @@ class RMWS(object):
 			# increase number of fields used
 			n += self.n_inc_fac
 
-			if n > self.n_uncondFields[0]:
+			if n > self.n_uncondFields[0]:				
 				ix,jx = self.add_uncondFields(nF=[1000])       
 			
 			selectedFields = self.uncondFields[self.random_index(self.ix, n)]
@@ -372,7 +372,7 @@ class RMWS(object):
 		while True:
 			res = list(it.islice(indit, n))
 			if len(res) < n:
-				ix, jx = self.add_uncondFields()
+				ix, jx = self.add_uncondFields(nF=[2000])
 				indit = iter(jx)
 				yield list(it.islice(indit, n))
 			else:
@@ -525,7 +525,7 @@ class RMWS(object):
 			if obj < nlargs.objmin:
 				notoptimal = False  
 				finalField = self.normalize_with_innerField(curhomogfield)
-				print('\n Stopping criteria reached!')
+				print('\n Defined minimum objective function value reached!')
 
 			# check if we need too many iterations and stop after maxiter
 			elif nlargs.counter == self.maxiter:
