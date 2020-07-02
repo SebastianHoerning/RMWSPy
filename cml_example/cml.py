@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 import scipy.stats as st
-fpth = os.path.abspath(os.path.join('rmwspy'))
+fpth = os.path.abspath(os.path.join('..', 'rmwspy'))
 sys.path.append(fpth)
 from random_mixing_whittaker_shannon import *
 
@@ -13,9 +13,6 @@ class CMLModel(NonLinearProblemTemplate):
 		self.cmllinks = cmllinks     
 		
 	def objective_function(self, prediction):
-		# if prediction.ndim == 1:
-		# 	return np.mean((self.data - prediction)**2)**0.5
-		# elif prediction.ndim == 2:
 		return np.mean((self.data - prediction)**2, axis=1)**0.5
 	
 	def allforwards(self, fields):	

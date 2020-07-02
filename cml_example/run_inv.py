@@ -10,10 +10,8 @@ import bresenhamline as bresenhamline
 import scipy.interpolate as interpolate
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
-fpth = os.path.abspath(os.path.join('..', 'rmwspy'))
-sys.path.append(fpth)
-import gcopula_sparaest as sparest
 from cml import *
+import gcopula_sparaest as sparest
 
 # start time
 start = datetime.datetime.now()
