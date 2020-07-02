@@ -1,7 +1,6 @@
 import os
 import sys
 import datetime
-import IPython
 import numpy as np
 import scipy.stats as st
 import matplotlib.pylab as plt
