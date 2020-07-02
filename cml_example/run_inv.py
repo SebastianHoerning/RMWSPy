@@ -26,7 +26,7 @@ np.random.seed(121)
 # which requires the installation of some
 # non-standard modules and the download
 # of an additional nc file
-paperstyle_plot = False
+paperstyle_plot = True 
 
 # PREPROCESSING
 #--------------
@@ -137,13 +137,13 @@ for tstep in range(start_time_idx, end_time_idx):
 
 	# fit a Gaussian copula -> spatial model
 	outputfile = None               			# if you want to specify an outputfile -> os.path.join(savefolder, 'MLM.sparaest')   
-	u = (st.rankdata(prec)-0.5)/prec.shape[0]   # observations in copula (rank) space
+	u = (st.rankdata(prec) - 0.5) / prec.shape[0]   # observations in copula (rank) space
 	covmods = ['Mat', 'Exp', 'Sph',]     # covariance function that will be tried for the fitting
 	ntries = 6                                  # number of tries per covariance function with random subsets
 
 	cmods = sparest.paraest_multiple_tries(np.copy(p_xy),
 										   u,
-										   ntries = [ntries,ntries],
+										   ntries = [ntries, ntries],
 										   n_in_subset = 5,               # number of values in subsets
 										   neighbourhood = 'nearest',     # subset search algorithm
 										   covmods = covmods,             # covariance functions
@@ -165,7 +165,7 @@ for tstep in range(start_time_idx, end_time_idx):
 	# SIMULATION USING RMWSPy
 	#------------------------
 	# number of conditional fields to be simulated
-	nfields = 100
+	nfields = 50
 
 	# marginal distribution variables
 	marginal = {}
@@ -185,8 +185,9 @@ for tstep in range(start_time_idx, end_time_idx):
 			 le_cp = lecp,
 			 le_cv = lecv,
 			 optmethod = 'circleopt',
-			 minObj = 0.3,    
-			 maxiter = 200,
+			 minObj = 0.4,
+			 maxbadcount= 20,    
+			 maxiter = 300,
 			 )
 
 	# run RMWS

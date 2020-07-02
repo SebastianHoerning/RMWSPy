@@ -184,7 +184,7 @@ def type_cauchy(h, Range=1., Sill=1., alpha=1., beta=1.0):
     return Sill*(1 + (h/Range)**alpha)**(-beta/alpha)
 
 
-def find_maximum_range(model='1.0 Exp(1.0)', rho_thresh=0.01):
+def find_maximum_range(model='1.0 Exp(1.0)', rho_thresh=0.03):
     '''
     returns range of the model where correlation is rho_thresh
     '''
