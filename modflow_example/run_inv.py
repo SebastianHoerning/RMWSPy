@@ -9,7 +9,6 @@
 import os
 import sys
 import datetime
-import IPython
 import numpy as np
 import scipy.stats as st
 import scipy.spatial as sp
@@ -18,7 +17,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import scipy.interpolate as interpolate
 from gwmod import *
 import gcopula_sparaest as sparest
-
 
 # use random seed if you want to ensure reproducibility
 np.random.seed(123)
@@ -31,7 +29,7 @@ if not os.path.exists('temp'):
 nm = 'gw_inv'
 
 '''
-	define executable names and path to file
+define executable names and path to file
 add path to MODFLOW executable
 MODFLOW reference:
 Langevin, C.D., Hughes, J.D., Banta, E.R., Provost, A.M., 
@@ -41,7 +39,7 @@ U.S. Geological Survey Software Release, 12 December 2019,
 https://doi.org/10.5066/F76Q1VQV
 '''
 
-exe_loc = r'C:\Users\uqshoern\Documents\transport_random_mixing\bin'
+exe_loc = r'C:\Users\uqshoern\Documents\transport_random_mixing\bin' # CHANGE THIS PATH
 mfexe = 'mf6.exe'
 mfexe = os.path.join(exe_loc, mfexe)
 	
@@ -191,7 +189,7 @@ print (cmod)
 my_model = GWModel(h_obswell, obswell, MF, dist_par, laytyp, kv, headfile, threading=True, nthreads=4)
 
 # number of conditional fields to be simulated
-nfields = 2
+nfields = 50
 # initialize Random Mixing Whittaker-Shannon
 CS = RMWS(my_model,
 		 domainsize = (nrow, ncol),
@@ -201,7 +199,7 @@ CS = RMWS(my_model,
 		 cv = cv,
 		 optmethod = 'circleopt',
 		 minObj = 0.2,    
-		 maxiter = 3,
+		 maxiter = 10,
 		 p_on_circle=p_on_circle
 		 )
 
@@ -214,7 +212,7 @@ CS()
 kh_fields = st.lognorm.ppf(st.norm.cdf(CS.finalFields), dist_par[0], loc=dist_par[1], scale=dist_par[2])
 
 # save simulated kh fields
-np.save('RandomFields.npy', kh_fields)
+np.save('kh_fields.npy', kh_fields)
 
 # run MF again using these kh fields to obtain final heads
 h_fields = []

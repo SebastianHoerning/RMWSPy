@@ -32,7 +32,7 @@ try:
 	Release, 15 December 2019, http://dx.doi.org/10.5066/F7BK19FH
 	'''
 except:
-	# add path to flopy!
+	# CHANGE THIS PATH
 	fpth = os.path.abspath(os.path.join(r'C:\Users\uqshoern\Documents\transport_random_mixing'))
 	sys.path.append(fpth)
 	import flopy
