@@ -23,7 +23,7 @@ np.random.seed(121)
 # which requires the installation of some
 # non-standard modules and the download
 # of an additional nc file
-paperstyle_plot = True 
+paperstyle_plot = False 
 
 # PREPROCESSING
 #--------------
