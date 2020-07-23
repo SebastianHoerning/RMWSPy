@@ -485,6 +485,9 @@ class RMWS(object):
 			# get objective function from interpolated values
 			objinter = self.nonlinearproblem.objective_function(intp_nlvals)
 
+			# check shape of returned objective function values
+			assert len(objinter) > 1, ('Objective function needs to return {} values!'.format(circlediscr.shape[0]))
+
 			# find optimal solution from interpolated objective function
 			ix = np.where(objinter == objinter.min())[0][0]
 			xsopt = np.array((np.cos(circlediscr[ix]),np.sin(circlediscr[ix])))
@@ -496,6 +499,10 @@ class RMWS(object):
 			
 			# real objective function value at the optimal angle
 			curobj = self.nonlinearproblem.objective_function(opt_nlvals)
+
+			# check shape of returned objective function values
+			assert len(curobj) == 1, ('Objective function needs to return ONE value only!')
+
 			print('\r', curobj, end='')
 			sys.stdout.flush()
 
@@ -548,7 +555,11 @@ class RMWS(object):
 		
 		z[:n//2] = res[:n//2]
 		z[-n//2:] = res[-n//2:]
-		ans = np.real(np.fft.ifft(z))*usf
+
+		if np.dtype(x[0]) == complex:
+			ans = np.fft.ifft(z) * usf
+		else:
+			ans = np.real(np.fft.ifft(z)) * usf
 
 		norig = (n + 2)/3 
 		if norig % 2 != 0:
