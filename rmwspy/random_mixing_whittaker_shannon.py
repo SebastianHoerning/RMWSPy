@@ -13,6 +13,7 @@ import numpy as np
 import scipy.stats as st
 import scipy.spatial as sp
 import itertools as it
+import pymc3 as pm
 import spectralsim as Specsim
 import covariancefunction as covfun
 
@@ -131,7 +132,7 @@ class RMWS(object):
 		else:
 			raise Exception('Wrong method!')
 			
-		# self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 5000)), 10000))]
+		self.n_uncondFields = [10]	# DELETE!!!
 		self.spsim = Specsim.spectral_random_field(domainsize=self.domainsize, covmod=self.covmod)      
 		self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 		for i in range(self.n_uncondFields[0]):
@@ -161,12 +162,25 @@ class RMWS(object):
 		# loop over number of required conditional fields
 		for simno in range(0, self.nFields):
 
-			#print(simno)
+			print(simno)
 
 			# if inequalities are present -> replace them by equalities
 			# using MCMC (Metropolis-Hastings Random Walk, MHRW_inequality)
 			if ((self.le_cp.shape[0] != 0) | (self.ge_cp.shape[0] != 0)):
-				self.MHRW_inequality()
+				# self.MHRW_inequality()
+				bounds = np.zeros((self.le_cp.shape[0], 2))
+				bounds[:, 0] = -5.
+				bounds[:, 1] = self.le_cv
+
+				s, r = self.mhrw_truncated(self.cond_mu, self.cov_cond, bounds, steps=150000)
+				# import pandas as pd
+				# import seaborn as sns
+				# import matplotlib.pylab as plt
+				# ss = pd.DataFrame(s[:, :8])
+				# sns.pairplot(ss)
+				# plt.show()
+				# # l=9
+				self.ineq_cv = s[-1]
 
 			# no inequalities
 			else: 
@@ -251,6 +265,7 @@ class RMWS(object):
 			self.finalFields.append(finalField)
 		self.finalFields = np.array(self.finalFields)
 		print('\n Simulation terminated!')
+
 
 	def MHRW_inequality(self,):  
 		# Metropolis-Hasting Random Walk to tranform
@@ -578,3 +593,29 @@ class RMWS(object):
 
 		return np.exp(pdf)
 
+
+	def mhrw_truncated(self, m, cov, bounds, steps=5000):
+		invcov = np.linalg.inv(cov)
+
+		x = st.truncnorm.rvs(-5, bounds[0, 1], 0, 1, size=len(m))
+		samples = [] 
+		rej_samples = []
+
+		for i in range(steps):
+			x_star = x + np.random.normal(0, 0.25, size=len(m) )
+			if np.random.rand() < self.pgauss_truncated(x_star, m, invcov, bounds) / self.pgauss_truncated(x, m, invcov, bounds):
+				x = x_star			
+				samples.append(x)
+			else:
+				rej_samples.append(x_star)
+
+		samples = np.array(samples)
+		rej_samples = np.array(rej_samples)
+		return samples, rej_samples 
+
+
+	def pgauss_truncated(self, x, m, invcov, bounds):
+		if np.any(x < bounds[:,0]) or np.any(x > bounds[:,1]):
+			return -np.inf
+		else:
+			return np.exp(-0.5 * (np.sum(np.tensordot(x - m, invcov, axes=1) * (x - m))))

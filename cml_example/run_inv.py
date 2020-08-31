@@ -29,8 +29,11 @@ paperstyle_plot = False
 #--------------
 # define start and end time step
 # 543 is the time step used in the paper
-start_time_idx = 543
-end_time_idx = 544
+start_time_idx = 541
+end_time_idx = 542
+
+# start_time_idx = 543
+# end_time_idx = 544
 
 # get path to input_data
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -162,7 +165,7 @@ for tstep in range(start_time_idx, end_time_idx):
 	# SIMULATION USING RMWSPy
 	#------------------------
 	# number of conditional fields to be simulated
-	nfields = 50
+	nfields = 20
 
 	# marginal distribution variables
 	marginal = {}
@@ -181,7 +184,7 @@ for tstep in range(start_time_idx, end_time_idx):
 			 cv = cv,
 			 le_cp = lecp,
 			 le_cv = lecv,
-			 optmethod = 'circleopt',
+			#  optmethod = 'circleopt',
 			 minObj = 0.4,
 			 maxbadcount= 20,    
 			 maxiter = 300,
