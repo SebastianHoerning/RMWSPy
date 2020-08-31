@@ -167,7 +167,7 @@ class RMWS(object):
 			# if inequalities are present -> replace them by equalities
 			# using MCMC (Metropolis-Hastings Random Walk, MHRW_inequality)
 			if ((self.le_cp.shape[0] != 0) | (self.ge_cp.shape[0] != 0)):
-				# self.MHRW_inequality()
+				
 				bounds = np.zeros((self.le_cp.shape[0], 2))
 				bounds[:, 0] = -5.
 				bounds[:, 1] = self.le_cv
@@ -265,43 +265,6 @@ class RMWS(object):
 			self.finalFields.append(finalField)
 		self.finalFields = np.array(self.finalFields)
 		print('\n Simulation terminated!')
-
-
-	def MHRW_inequality(self,):  
-		# Metropolis-Hasting Random Walk to tranform
-		# the inequalities to equalities, taking the conditional covariance
-		# and the conditional mean into account 
-		# NEEDS IMPROVEMENT     
-		LL = []
-		# draw a first guess from the corresponding truncated normals
-		for ineqcons in range(self.ge_cv.shape[0]):
-			self.ineq_cv[ineqcons] =  st.truncnorm.rvs(self.ge_cv[ineqcons],np.inf,0,1,1)
-		for ineqcons in range(self.ge_cv.shape[0],self.ineq_cv.shape[0]):
-			self.ineq_cv[ineqcons] = st.truncnorm.rvs(-np.inf,self.le_cv[ineqcons-self.ge_cv.shape[0]],0,1,1)
-		LL.append(self.pdf_gauss_ineq(self.ineq_cv))
-		Lbest = LL[0]
-
-		mcmc = []
-		mcmcsteps = np.min((np.max((self.ineq_cv.shape[0]**3, 20000)), 30000))
-
-		for mc in range(mcmcsteps):
-			ineq_fulfilled = False
-			while ineq_fulfilled == False:
-				can = np.copy(self.ineq_cv)
-				can += np.random.uniform(-0.01, 0.01, can.shape[0])
-				# check that values are within the valid truncated distribution
-				if (((can[:self.ge_cv.shape[0]] > self.ge_cv).all()) & ((can[self.ge_cv.shape[0]:] < self.le_cv).all())):
-					ineq_fulfilled = True
-
-			LL.append(self.pdf_gauss_ineq(can))
-
-			u = np.random.random()
-			if u < min([1.,LL[mc+1]/Lbest]):
-				self.ineq_cv = np.copy(can)
-				Lbest = LL[mc+1]
-				mcmc.append(can)
-
-		self.ineq_cv = mcmc[-1]
 
 	def random_index(self, inds, n):
 		return inds[:n]
@@ -593,7 +556,6 @@ class RMWS(object):
 
 		return np.exp(pdf)
 
-
 	def mhrw_truncated(self, m, cov, bounds, steps=5000):
 		invcov = np.linalg.inv(cov)
 
@@ -612,7 +574,6 @@ class RMWS(object):
 		samples = np.array(samples)
 		rej_samples = np.array(rej_samples)
 		return samples, rej_samples 
-
 
 	def pgauss_truncated(self, x, m, invcov, bounds):
 		if np.any(x < bounds[:,0]) or np.any(x > bounds[:,1]):
