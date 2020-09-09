@@ -168,18 +168,18 @@ class RMWS(object):
 			# using MCMC (Metropolis-Hastings Random Walk, MHRW_inequality)
 			if ((self.le_cp.shape[0] != 0) | (self.ge_cp.shape[0] != 0)):
 				
+				# todo fix bounds
 				bounds = np.zeros((self.le_cp.shape[0], 2))
 				bounds[:, 0] = -5.
 				bounds[:, 1] = self.le_cv
 
-				s, r = self.mhrw_truncated(self.cond_mu, self.cov_cond, bounds, steps=150000)
-				# import pandas as pd
-				# import seaborn as sns
-				# import matplotlib.pylab as plt
-				# ss = pd.DataFrame(s[:, :8])
-				# sns.pairplot(ss)
-				# plt.show()
-				# # l=9
+				if simno == 0:
+					# long chain intially
+					s = self.mhrw_truncated(self.cond_mu, self.cov_cond, bounds, steps=250000, initialg=None)
+				else:
+					# restart from last point in chain
+					s = self.mhrw_truncated(self.cond_mu, self.cov_cond, bounds, steps=5000, initialg=self.ineq_cv)
+
 				self.ineq_cv = s[-1]
 
 			# no inequalities
@@ -547,33 +547,23 @@ class RMWS(object):
 
 		return ans
 
-	def pdf_gauss_ineq(self, x):
-		dim = self.cov_cond.shape[0]
-		pdf = -0.5 * (np.sum(np.tensordot(x-self.cond_mu, self.inv_covcond,axes=1)*(x-self.cond_mu)))
-		maxl = 500
-		pdf = np.where(pdf < - maxl, -maxl, pdf)
-		pdf = np.where(pdf > maxl, maxl, pdf)
-
-		return np.exp(pdf)
-
-	def mhrw_truncated(self, m, cov, bounds, steps=5000):
+	def mhrw_truncated(self, m, cov, bounds, steps=5000, initialg=None):
 		invcov = np.linalg.inv(cov)
 
-		x = st.truncnorm.rvs(-5, bounds[0, 1], 0, 1, size=len(m))
-		samples = [] 
-		rej_samples = []
+		if initialg is None:
+			x = st.truncnorm.rvs(-5, bounds[0, 1], 0, 1, size=len(m))
+		else:
+			x = initialg
 
+		samples = [] 
 		for i in range(steps):
-			x_star = x + np.random.normal(0, 0.25, size=len(m) )
+			x_star = x + np.random.normal(0, 0.05, size=len(m) )
 			if np.random.rand() < self.pgauss_truncated(x_star, m, invcov, bounds) / self.pgauss_truncated(x, m, invcov, bounds):
 				x = x_star			
 				samples.append(x)
-			else:
-				rej_samples.append(x_star)
-
 		samples = np.array(samples)
-		rej_samples = np.array(rej_samples)
-		return samples, rej_samples 
+
+		return samples
 
 	def pgauss_truncated(self, x, m, invcov, bounds):
 		if np.any(x < bounds[:,0]) or np.any(x > bounds[:,1]):
