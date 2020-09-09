@@ -404,6 +404,9 @@ class RMWS(object):
 		t = np.linspace(0, np.pi*2,(usf*discr)-(usf-1))
 		return t
 
+	def get_point_for_sinc(self, discr):
+		self.t_s = np.linspace(-2*np.pi, np.pi*4, 3*discr-2)
+
 	def get_samplepoints_on_circle(self, discr):
 		t_s = np.linspace(0,np.pi*2,discr)
 		xsample = np.array((np.cos(t_s),np.sin(t_s)))
@@ -428,7 +431,13 @@ class RMWS(object):
 		hargs.numberHomogFields = 1
 
 		xsample = self.get_samplepoints_on_circle(cargs.discr)
-		circlediscr = self.get_points_on_circle(cargs.discr, cargs.usf)
+		self.get_point_for_sinc(cargs.discr)
+		self.circlediscr = self.get_points_on_circle(cargs.discr, cargs.usf)
+
+		# prepare sinc interpolation
+		self.T = self.t_s[1] - self.t_s[0]		
+		self.sincM = np.tile(self.circlediscr, (len(self.t_s), 1)) - np.tile(self.t_s[:, np.newaxis], (1, len(self.circlediscr)))
+		self.sincMT = np.sinc(self.sincM/self.T)
 
 		obj = 6666666666666.
 		notoptimal = True
@@ -447,16 +456,16 @@ class RMWS(object):
 			self.nlvals = self.nonlinearproblem.allforwards(normFields)
 
 			# add the first one which is the same as the last (cyclic, i.e. same angle) 
-			self.nlvals = np.vstack((self.nlvals, self.nlvals[-1]))
+			self.nlvals = np.vstack((self.nlvals, self.nlvals[0]))
 		
 			# interpolate values from samplepoints on the circle using Whittaker-Shannon interpolation        
 			intp_nlvals = []
 			for nlv in range(len(self.nonlinearproblem.data)):
 				# wrap it around from -2pi to 4pi to avoid funny boundary effects
 				x = self.nlvals[:,nlv]
-				x = np.concatenate(((x[:-1]),x))
-				x = np.concatenate((x,self.nlvals[:,nlv][1:]))
-				intp_nlval = self.dofftint(cargs.usf,x)
+				x = np.concatenate(((x[:-1], x, x[1:])))
+				# intp_nlval = self.dofftint(cargs.usf,x)
+				intp_nlval = self.sinc_interp(x)
 				intp_nlvals.append(np.array(intp_nlval))
 			intp_nlvals = np.array(intp_nlvals).T
 	 
@@ -464,11 +473,11 @@ class RMWS(object):
 			objinter = self.nonlinearproblem.objective_function(intp_nlvals)
 
 			# check shape of returned objective function values
-			assert len(objinter) > 1, ('Objective function needs to return {} values!'.format(circlediscr.shape[0]))
+			assert len(objinter) > 1, ('Objective function needs to return {} values!'.format(self.circlediscr.shape[0]))
 
 			# find optimal solution from interpolated objective function
 			ix = np.where(objinter == objinter.min())[0][0]
-			xsopt = np.array((np.cos(circlediscr[ix]),np.sin(circlediscr[ix])))
+			xsopt = np.array((np.cos(self.circlediscr[ix]),np.sin(self.circlediscr[ix])))
 
 			# and run the forward model for these weights again to obtain
 			# the real (non-interpolated) objective function value
@@ -546,6 +555,23 @@ class RMWS(object):
 		ans = ans[horst:horst+horst+1]
 
 		return ans
+
+	def sinc_interp(self, x):
+		"""
+		Interpolates x, sampled at "s" instants
+		Output y is sampled at "u" instants ("u" for "upsampled")
+		     
+		"""
+		
+		# if len(x) != len(s):
+		# 	raise Exception
+		
+		# Find the period   
+		# T = self.t_s[1] - self.t_s[0]
+		
+		# sincM = np.tile(self.circlediscr, (len(self.t_s), 1)) - np.tile(self.t_s[:, np.newaxis], (1, len(self.circlediscr)))
+		y = np.dot(x, self.sincMT)
+		return y
 
 	def mhrw_truncated(self, m, cov, bounds, steps=5000, initialg=None):
 		invcov = np.linalg.inv(cov)
