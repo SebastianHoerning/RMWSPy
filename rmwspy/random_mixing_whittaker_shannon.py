@@ -457,18 +457,35 @@ class RMWS(object):
 
 			# add the first one which is the same as the last (cyclic, i.e. same angle) 
 			self.nlvals = np.vstack((self.nlvals, self.nlvals[0]))
-		
+
 			# interpolate values from samplepoints on the circle using Whittaker-Shannon interpolation        
-			intp_nlvals = []
-			for nlv in range(len(self.nonlinearproblem.data)):
-				# wrap it around from -2pi to 4pi to avoid funny boundary effects
-				x = self.nlvals[:,nlv]
-				x = np.concatenate(((x[:-1], x, x[1:])))
-				# intp_nlval = self.dofftint(cargs.usf,x)
-				intp_nlval = self.sinc_interp(x)
-				intp_nlvals.append(np.array(intp_nlval))
-			intp_nlvals = np.array(intp_nlvals).T
+			# intp_nlvals = []
+			# for nlv in range(len(self.nonlinearproblem.data)):
+			# 	# wrap it around from -2pi to 4pi to avoid funny boundary effects
+			# 	x = self.nlvals[:,nlv]
+			# 	x = np.concatenate(((x[:-1], x, x[1:])))
+			# 	# intp_nlval = self.dofftint(cargs.usf,x)
+			# 	intp_nlval = self.sinc_interp(x)
+			# 	intp_nlvals.append(np.array(intp_nlval))
+			# intp_nlvals = np.array(intp_nlvals).T
+
+
+			# # sinc intp in matrix form		
+			# intp_nlvals1 = []
+			# for nlv in range(len(self.nonlinearproblem.data)):
+			# 	# wrap it around from -2pi to 4pi to avoid funny boundary effects
+			# 	x = self.nlvals[:,nlv]
+			# 	x = np.concatenate(((x[:-1], x, x[1:])))
+			# 	intp_nlvals1.append(x)
+			# intp_nlvals1 = np.array(intp_nlvals1)
+			# intp_nlvals = self.sinc_interp(intp_nlvals1).T
+			
 	 
+			# avoid the loop for sinc interp in matrix form
+			intp_nlvals1 = np.concatenate((self.nlvals[:-1], self.nlvals, self.nlvals[1:])).T
+			intp_nlvals = self.sinc_interp(intp_nlvals1).T
+
+
 			# get objective function from interpolated values
 			objinter = self.nonlinearproblem.objective_function(intp_nlvals)
 

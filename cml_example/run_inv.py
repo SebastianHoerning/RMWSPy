@@ -184,7 +184,7 @@ for tstep in range(start_time_idx, end_time_idx):
 			 cv = cv,
 			 le_cp = lecp,
 			 le_cv = lecv,
-			#  optmethod = 'circleopt',
+			 optmethod = 'circleopt',
 			 minObj = 0.4,
 			 maxbadcount= 20,    
 			 maxiter = 300,
