@@ -1,0 +1,24 @@
+/.ipynb_checkpoints
+/0
+/.vscode
+/__pycache__
+/0 - Constant
+/CMG Model results.csv
+/Coal_Multilayer0.csv
+/GEM_ASC_Reader.zip
+/GEM_ASC_Reader_old.py
+/Pres_data.csv
+/SG_data.csv
+NEW.grdecl
+Coal_Multilayer_NO_sch2.csv
+**/*.inc
+**/*.asc
+**/*.out
+**/*.irf
+**/*.sr3
+**/*.mrf
+**/*.png
+NERAmodels2/
+surfmove _calc.py
+fromgeomodel.txt
+/temp
