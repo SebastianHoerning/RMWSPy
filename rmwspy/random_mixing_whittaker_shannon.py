@@ -13,7 +13,7 @@ import numpy as np
 import scipy.stats as st
 import scipy.spatial as sp
 import itertools as it
-import pymc3 as pm
+# import pymc3 as pm
 import spectralsim as Specsim
 import covariancefunction as covfun
 

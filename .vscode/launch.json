@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": ""
+            "cwd": "${fileDirname}" 
+            
         }
     ]
 }

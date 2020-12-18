@@ -186,7 +186,7 @@ print (cmod)
 
 
 # initialize the groundwater model
-my_model = GWModel(h_obswell, obswell, MF, dist_par, laytyp, kv, headfile, threading=True, nthreads=4)
+my_model = GWModel(h_obswell, obswell, MF, dist_par, laytyp, kv, headfile, threading=False, nthreads=4)
 
 # number of conditional fields to be simulated
 nfields = 50

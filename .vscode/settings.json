@@ -1,8 +1,3 @@
 {
-    "terminal.integrated.shellArgs.windows": [
-        "/K",
-        "C:\\Users\\uqshoern\\AppData\\Local\\Continuum\\anaconda3\\Scripts\\activate.bat C:\\Users\\uqshoern\\AppData\\Local\\Continuum\\anaconda3"
-    ],
-    "python.condaPath": "C:\\Users\\uqshoern\\AppData\\Local\\Continuum\\anaconda3\\Scripts\\activate.bat",
-    "python.pythonPath": "C:\\Users\\uqshoern\\AppData\\Local\\Continuum\\anaconda3\\python.exe"
+    "python.pythonPath": "C:\\Users\\uqshoern\\Anaconda3\\python.exe"
 }
