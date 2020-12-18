@@ -189,7 +189,7 @@ print (cmod)
 my_model = GWModel(h_obswell, obswell, MF, dist_par, laytyp, kv, headfile, threading=False, nthreads=4)
 
 # number of conditional fields to be simulated
-nfields = 50
+nfields = 10
 # initialize Random Mixing Whittaker-Shannon
 CS = RMWS(my_model,
 		 domainsize = (nrow, ncol),

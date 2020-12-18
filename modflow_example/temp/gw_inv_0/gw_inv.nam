@@ -1,0 +1,13 @@
+BEGIN options
+  SAVE_FLOWS
+END options
+
+BEGIN packages
+  DIS6  gw_inv.dis  dis
+  IC6  gw_inv.ic  ic
+  WEL6  gw_inv.wel  wel
+  CHD6  gw_inv.chd  chd_0
+  OC6  gw_inv.oc  oc
+  NPF6  gw_inv.npf  npf
+END packages
+
