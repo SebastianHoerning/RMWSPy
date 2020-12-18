@@ -21,4 +21,4 @@ Coal_Multilayer_NO_sch2.csv
 NERAmodels2/
 surfmove _calc.py
 fromgeomodel.txt
-./temp
+**/temp
