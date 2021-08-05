@@ -2,7 +2,8 @@
 Version 1.1
 
 # Introduction
-RMWSPy is a Python package for conditional spatial random field simulation and inverse modelling, that provides great flexibility in its range of conditioning constraints and its applications. To get an idea of the underlying RMWS algorithm, the interested reader is referred to https://doi.org/10.1016/j.advwatres.2018.11.012 (S. Hörning and J. Sreekanth and A. Bárdossy, 2019, Computational efficient inverse groundwater modeling using Random Mixing and Whittaker–Shannon interpolation, Advances in Water Resources 123, pages 109-119). A paper describing the actual Python package will be available soon.
+RMWSPy is a Python package for conditional spatial random field simulation and inverse modelling, that provides great flexibility in its range of conditioning constraints and its applications. To get an idea of the underlying RMWS algorithm, the interested reader is referred to https://doi.org/10.1016/j.advwatres.2018.11.012 (S. Hörning and J. Sreekanth and A. Bárdossy, 2019, Computational efficient inverse groundwater modeling using Random Mixing and Whittaker–Shannon interpolation, Advances in Water Resources 123, pages 109-119). A paper describing the actual Python package is now available: S. Hörning, B. Haese, RMWSPy (v 1.1): A Python code for spatial simulation and inversion for environmental applications,
+Environmental Modelling & Software, Volume 138, 2021, https://doi.org/10.1016/j.envsoft.2021.104970.
 
 # Contributing
 Bug reports, code contributions, and improvements are welcome from the community.
