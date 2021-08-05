@@ -132,7 +132,6 @@ class RMWS(object):
 		else:
 			raise Exception('Wrong method!')
 			
-		self.n_uncondFields = [10]	# DELETE!!!
 		self.spsim = Specsim.spectral_random_field(domainsize=self.domainsize, covmod=self.covmod)      
 		self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 		for i in range(self.n_uncondFields[0]):
