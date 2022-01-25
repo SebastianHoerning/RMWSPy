@@ -2,8 +2,10 @@ import os
 import sys
 import numpy as np
 import scipy.stats as st
-fpth = os.path.abspath(os.path.join( 'rmwspy'))
-sys.path.append(fpth)
+# fpth = os.path.abspath(os.path.join( 'rmwspy'))
+# sys.path.append(fpth)
+# Hard Coded path to rmwspy script... Ugh...
+sys.path.append(r"C:\Users\uqirodge\ownCloud\Code_Development\RMWSPy\rmwspy")
 from random_mixing_whittaker_shannon import *
 
 class CMLModel(NonLinearProblemTemplate):
