@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import scipy.stats as st
 # fpth = os.path.abspath(os.path.join('..', 'rmwspy'))
-sys.path.append(r'C:\Users\uqirodge\ownCloud\Code_Development\SH\RMWSPy_LOCAL_OPT\rmwspy')
+# sys.path.append(r'C:\Users\uqirodge\ownCloud\Code_Development\SH\RMWSPy_LOCAL_OPT\rmwspy')
 from random_mixing_whittaker_shannon import *
 
 class CMLModel(NonLinearProblemTemplate):
