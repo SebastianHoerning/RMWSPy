@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import numpy as np
-import covariancefunction as covfun
+import RMWSPy.rmwspy.covariancefunction as covfun
 
 class spectral_random_field(object):
     def __init__(self,
