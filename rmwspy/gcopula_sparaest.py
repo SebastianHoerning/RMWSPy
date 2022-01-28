@@ -14,8 +14,8 @@ import scipy.stats as st
 import scipy.spatial as sp
 import scipy.optimize as opt
 import datetime
-import covariancefunction as variogram
-import gaussian_copula as thcopula
+import RMWSPy.rmwspy.covariancefunction as variogram
+import RMWSPy.rmwspy.gaussian_copula as thcopula
 
 
 def paraest_multiple_tries(
