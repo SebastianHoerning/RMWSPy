@@ -165,7 +165,7 @@ for tstep in range(start_time_idx, end_time_idx):
 	# SIMULATION USING RMWSPy
 	#------------------------
 	# number of conditional fields to be simulated
-	nfields = 20
+	nfields = 4
 
 	# marginal distribution variables
 	marginal = {}
@@ -187,7 +187,7 @@ for tstep in range(start_time_idx, end_time_idx):
 			 optmethod = 'circleopt',
 			 minObj = 0.4,
 			 maxbadcount= 20,    
-			 maxiter = 300,
+			 maxiter = 4,
 			 )
 
 	# run RMWS

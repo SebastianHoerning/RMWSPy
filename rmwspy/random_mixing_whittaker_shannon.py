@@ -85,6 +85,8 @@ class RMWS(object):
 		assert isinstance(nonlinearproblem, NonLinearProblemTemplate)
 		self.nonlinearproblem = nonlinearproblem
 
+		print('RMWS LOADED')
+
 		self.domainsize = list(domainsize)
 		self.nFields = nFields
 		self.finalFields = []      
@@ -261,6 +263,29 @@ class RMWS(object):
 					args = Bunch(args)
 
 					finalField = self.getFinalField(self.noNLconstraints, args)
+	
+				elif self.method == 'circleopt':
+					# dict for the non-linear constraints   
+					nlvar = {   'counter':0,  
+								'objmin':self.minObj, 
+									}			  
+					nlvar = Bunch(nlvar)
+
+					# dict for Whittaker-Shannon
+					circlevars = {  'discr':self.p_on_circle, 
+									'usf':60
+								}
+					circlevars = Bunch(circlevars)
+
+					# dict that combines all other dicts
+					args = {    #'homogargs':homogargs, 
+								'nlvar':nlvar, 
+								'circlevars':circlevars
+							}
+					args = Bunch(args)
+
+
+					finalField, updatedargs = self.getFinalField(self.circleopt, args)
 			
 			else:
 				# with non-linear constraints use RMWS
