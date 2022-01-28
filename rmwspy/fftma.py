@@ -10,11 +10,7 @@
 
 import numpy as np
 import sys
-<<<<<<< HEAD
 from . import covariancefunction as covfun
-=======
-import RMWSPy.rmwspy.covariancefunction as covfun
->>>>>>> 5f33b7ffdad43c41ea0dbd05f2c2779542d15117
 import scipy
 import scipy.stats as st
 import matplotlib.pyplot as plt
