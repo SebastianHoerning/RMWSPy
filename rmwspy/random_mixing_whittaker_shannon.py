@@ -15,9 +15,9 @@ import scipy.spatial as sp
 from scipy.ndimage import map_coordinates
 import itertools as it
 # import pymc3 as pm
-import RMWSPy.rmwspy.spectralsim as Specsim
-import RMWSPy.rmwspy.covariancefunction as covfun
-import RMWSPy.rmwspy.fftma as fftma
+from . import spectralsim as Specsim
+from . import covariancefunction as covfun
+from . import fftma as fftma
 
 class Bunch(object):
 	def __init__(self, adict):
