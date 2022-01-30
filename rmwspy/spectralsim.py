@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import numpy as np
-import covariancefunction as covfun
+from . import covariancefunction as covfun
 
 class spectral_random_field(object):
     def __init__(self,

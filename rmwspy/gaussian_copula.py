@@ -11,8 +11,6 @@ import numpy as np
 import scipy.stats as st
 import numexpr
 
-
-
 def stdnormpdf(x):
     return 1./(2*np.pi)**0.5 * np.exp(-x**2/2.)
 

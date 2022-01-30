@@ -10,7 +10,7 @@
 
 import numpy as np
 import sys
-import covariancefunction as covfun
+from . import covariancefunction as covfun
 import scipy
 import scipy.stats as st
 import matplotlib.pyplot as plt
