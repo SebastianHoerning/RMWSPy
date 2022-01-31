@@ -10,7 +10,7 @@ import scipy.interpolate as interpolate
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from cml import *
-import gcopula_sparaest as sparest
+import RMWSPy.rmwspy.gcopula_sparaest as sparest
 
 # start time
 start = datetime.datetime.now()
@@ -141,26 +141,27 @@ for tstep in range(start_time_idx, end_time_idx):
 	covmods = ['Mat', 'Exp', 'Sph',]     # covariance function that will be tried for the fitting
 	ntries = 6                                  # number of tries per covariance function with random subsets
 
-	cmods = sparest.paraest_multiple_tries(np.copy(p_xy),
-										   u,
-										   ntries = [ntries, ntries],
-										   n_in_subset = 5,               # number of values in subsets
-										   neighbourhood = 'nearest',     # subset search algorithm
-										   covmods = covmods,             # covariance functions
-										   outputfile = outputfile)       # store all fitted models in an output file
+	# cmods = sparest.paraest_multiple_tries(np.copy(p_xy),
+	# 									   u,
+	# 									   ntries = [ntries, ntries],
+	# 									   n_in_subset = 5,               # number of values in subsets
+	# 									   neighbourhood = 'nearest',     # subset search algorithm
+	# 									   covmods = covmods,             # covariance functions
+	# 									   outputfile = outputfile)       # store all fitted models in an output file
 
-	# take the copula model with the highest likelihood
-	# reconstruct from parameter array
-	likelihood = -666
-	for model in range(len(cmods)):
-		for tries in range(ntries):
-			if cmods[model][tries][1]*-1. > likelihood:
-				likelihood = cmods[model][tries][1]*-1.
-				cmod = '0.01 Nug(0.0) + 0.99 %s(%1.3f)'%(covmods[model], cmods[model][tries][0][0])
-				if covmods[model] == 'Mat':
-					cmod += '^%1.3f'%(cmods[model][tries][0][1])
+	# # take the copula model with the highest likelihood
+	# # reconstruct from parameter array
+	# likelihood = -666
+	# for model in range(len(cmods)):
+	# 	for tries in range(ntries):
+	# 		if cmods[model][tries][1]*-1. > likelihood:
+	# 			likelihood = cmods[model][tries][1]*-1.
+	# 			cmod = '0.01 Nug(0.0) + 0.99 %s(%1.3f)'%(covmods[model], cmods[model][tries][0][0])
+	# 			if covmods[model] == 'Mat':
+	# 				cmod += '^%1.3f'%(cmods[model][tries][0][1])
 
-	print (cmod)
+	cmod = '1.0 Mat(60)^1.0'
+	# print (cmod)
  
 	# SIMULATION USING RMWSPy
 	#------------------------

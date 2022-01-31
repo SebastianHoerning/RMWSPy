@@ -62,8 +62,6 @@ class spectral_random_field(object):
 
         self.Y = self.simnew()
 
-
-
     def simnew(self):
         self.counter += 1
         # compute random field via inverse fourier transform
