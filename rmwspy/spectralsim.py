@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import numpy as np
-import covariancefunction as covfun
+from . import covariancefunction as covfun
 
 class spectral_random_field(object):
     def __init__(self,
@@ -61,8 +61,6 @@ class spectral_random_field(object):
         self.sqrtFFTQ = np.sqrt(self.FFTQ / self.npoints)
 
         self.Y = self.simnew()
-
-
 
     def simnew(self):
         self.counter += 1

@@ -12,10 +12,11 @@ import sys
 import numpy as np
 import scipy.stats as st
 import scipy.spatial as sp
+from scipy.ndimage import map_coordinates
 import itertools as it
-# import pymc3 as pm
-import spectralsim as Specsim
-import covariancefunction as covfun
+from . import spectralsim as Specsim
+from . import covariancefunction as covfun
+from . import fftma as fftma
 
 class Bunch(object):
 	def __init__(self, adict):
@@ -55,7 +56,7 @@ class NonLinearProblemTemplate(object):
 
 class RMWS(object):
 	def __init__(self,
-				 nonlinearproblem,
+				 nonlinearproblem=None,
 				 domainsize=(50,50),           # domainsize
 				 covmod='0.01 Nug(0.0) + 0.99 Exp(3.5)',     # spatial covariance model
 				 nFields=10,                # number of fields to simulate
@@ -71,8 +72,17 @@ class RMWS(object):
 				 maxiter=None,              # maximum number of iterations for optimization
 				 maxbadcount=10,            # max number of consecutive iteration with less than frac_imp -> stopping criteria
 				 frac_imp=0.9975,           # 0.25%
-
+				 anisotropy=False,			# requires tuple (scale 0, scale 1,...., scale n, rotate 0, rotate 1,..., rotate n-1)
+				 sim_method='fftma'			# fftma or specsim for unconditional field simulation
 				 ):
+
+		if nonlinearproblem is None:
+			class nononlinear(NonLinearProblemTemplate):
+				def __init__(self,):
+					pass
+			# initialize empty nonlinear class
+			my_nonl = nononlinear()
+			nonlinearproblem = my_nonl
 
 		assert isinstance(nonlinearproblem, NonLinearProblemTemplate)
 		self.nonlinearproblem = nonlinearproblem
@@ -87,7 +97,8 @@ class RMWS(object):
 		self.maxbadcount = maxbadcount
 		self.frac_imp = frac_imp
 		self.p_on_circle = p_on_circle
-		
+		self.anisotropy = anisotropy
+
 		if cp is None:
 			if len(self.domainsize) == 3:
 				self.cp = np.atleast_3d(np.array([])).reshape(0,3).astype('int')
@@ -131,11 +142,24 @@ class RMWS(object):
 			self.n_uncondFields = [np.min((np.max((self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0], 10000)), 15000))]  
 		else:
 			raise Exception('Wrong method!')
-			
-		self.spsim = Specsim.spectral_random_field(domainsize=self.domainsize, covmod=self.covmod)      
+
+		# only fftma can handle anisotropy
+		if self.anisotropy != False:
+			if sim_method == 'specsim':
+				print('Unconditional simulation method changed to FFTMA to incorporate anisotropy!')
+				sim_method = 'fftma'
+
+		if sim_method == 'fftma':
+			self.uncondsim = fftma.FFTMA(domainsize=self.domainsize, covmod=self.covmod, anisotropy=self.anisotropy)	
+		elif sim_method == 'specsim':
+			self.uncondsim = Specsim.spectral_random_field(domainsize=self.domainsize, covmod=self.covmod)     
+
+		# simulate unconditional fields	
 		self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 		for i in range(self.n_uncondFields[0]):
-			self.uncondFields[i] = self.spsim.simnew()
+			s = self.uncondsim.simnew()
+			s = (s - s.mean())/np.std(s)
+			self.uncondFields[i] = s
 
 		self.n_inc_fac = int(np.max([5,(self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0])/2.]))
 
@@ -156,6 +180,8 @@ class RMWS(object):
 			self.cov_cond = cov11 - np.tensordot(cov12,np.tensordot(np.linalg.inv(cov22),cov21,axes=1),axes=1)
 			self.inv_covcond = np.linalg.inv(self.cov_cond)
 			self.cond_mu = np.tensordot(np.tensordot(cov12,np.linalg.inv(cov22),axes=1),self.cv,axes=1)
+
+
 
 	def __call__(self,):		
 		# loop over number of required conditional fields
@@ -228,15 +254,14 @@ class RMWS(object):
 
 			# generate first set of homogeneous fields and add to object
 			homogargs = self.generate_homogeneous_fields(homogargs)
-
+		
 			# this is RM without non-linear constraints
 			if self.method == 'no_nl_constraints':
 				args = {'homogargs':homogargs}
 				args = Bunch(args)
 
 				finalField = self.getFinalField(self.noNLconstraints, args)
-			
-			# with non-linear constraints use RMWS
+
 			elif self.method == 'circleopt':
 				# dict for the non-linear constraints   
 				nlvar = {   'counter':0,  
@@ -247,7 +272,7 @@ class RMWS(object):
 				# dict for Whittaker-Shannon
 				circlevars = {  'discr':self.p_on_circle, 
 								'usf':60
-							 }
+							}
 				circlevars = Bunch(circlevars)
 
 				# dict that combines all other dicts
@@ -259,8 +284,7 @@ class RMWS(object):
 
 
 				finalField, updatedargs = self.getFinalField(self.circleopt, args)
-
-
+			
 			self.finalFields.append(finalField)
 		self.finalFields = np.array(self.finalFields)
 		print('\n Simulation terminated!')
@@ -270,9 +294,9 @@ class RMWS(object):
 
 	def get_at_cond_locations(self, data, cp):
 		assert cp.ndim > 1
-		dimensions = list(map(lambda x: cp[:,x], range(cp.ndim)))
-		fullslice = [slice(None,None)] 
-		if data.ndim > cp.ndim:
+		dimensions = list(map(lambda x: cp[:,x], range(cp.shape[-1])))
+		fullslice = [slice(None, None)] 
+		if data.ndim > cp.shape[-1]:
 			return data[ tuple(fullslice + dimensions) ].T
 		else:
 			return data[ tuple(dimensions) ].T
@@ -281,7 +305,6 @@ class RMWS(object):
 		# number of fields used when minimizing norm
 		n = self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0] 
 
-		#print( '\n Find low norm solution')
 		norm_inner = 666
 		while norm_inner > 0.1:
 
@@ -289,7 +312,7 @@ class RMWS(object):
 			n += self.n_inc_fac
 
 			if n > self.n_uncondFields[0]:				
-				ix,jx = self.add_uncondFields(nF=[1000])       
+				ix,jx = self.add_uncondFields(nF=[500])       
 			
 			selectedFields = self.uncondFields[self.random_index(self.ix, n)]
 			A = self.get_at_cond_locations(selectedFields, self.cp_total)
@@ -302,14 +325,14 @@ class RMWS(object):
 			# but it only works for equalities, thats why we had to transform
 			# the inequalities in advance
 			norm_inner = np.sum((c/S)**2)
-
+			print(norm_inner)
 		s = np.sum((c/S)*V.T[:,:S.shape[0]],axis=1)
 		return (s, norm_inner, n)
 
 	def add_uncondFields(self,nF=[100]):	
 		addField = np.empty(nF + self.domainsize, dtype=('float32'))
 		for i in range(nF[0]):
-			s = self.spsim.simnew()
+			s = self.uncondsim.simnew()
 			addField[i] = (s - s.mean())/s.std()
 		# add the new fields to the old ones
 		self.uncondFields = np.concatenate((self.uncondFields,addField))
@@ -325,14 +348,6 @@ class RMWS(object):
 		self.jx = np.concatenate((self.jx, jx))
 
 		return (ix, jx)
-
-	def sim_uncondFields(self, nF=[100]):
-		uncondFields = np.empty(nF + self.domainsize, dtype=('float32'))
-		for i in range(nF[0]):
-			s = self.spsim.simnew()
-			uncondFields[i] = (s - s.mean())/s.std()
-
-		return uncondFields
 
 	def generate_indicies(self,):
 		ix = np.arange(0,self.n_uncondFields[0])
@@ -455,30 +470,7 @@ class RMWS(object):
 			self.nlvals = self.nonlinearproblem.allforwards(normFields)
 
 			# add the first one which is the same as the last (cyclic, i.e. same angle) 
-			self.nlvals = np.vstack((self.nlvals, self.nlvals[0]))
-
-			# interpolate values from samplepoints on the circle using Whittaker-Shannon interpolation        
-			# intp_nlvals = []
-			# for nlv in range(len(self.nonlinearproblem.data)):
-			# 	# wrap it around from -2pi to 4pi to avoid funny boundary effects
-			# 	x = self.nlvals[:,nlv]
-			# 	x = np.concatenate(((x[:-1], x, x[1:])))
-			# 	# intp_nlval = self.dofftint(cargs.usf,x)
-			# 	intp_nlval = self.sinc_interp(x)
-			# 	intp_nlvals.append(np.array(intp_nlval))
-			# intp_nlvals = np.array(intp_nlvals).T
-
-
-			# # sinc intp in matrix form		
-			# intp_nlvals1 = []
-			# for nlv in range(len(self.nonlinearproblem.data)):
-			# 	# wrap it around from -2pi to 4pi to avoid funny boundary effects
-			# 	x = self.nlvals[:,nlv]
-			# 	x = np.concatenate(((x[:-1], x, x[1:])))
-			# 	intp_nlvals1.append(x)
-			# intp_nlvals1 = np.array(intp_nlvals1)
-			# intp_nlvals = self.sinc_interp(intp_nlvals1).T
-			
+			self.nlvals = np.vstack((self.nlvals, self.nlvals[0]))		
 	 
 			# avoid the loop for sinc interp in matrix form
 			intp_nlvals1 = np.concatenate((self.nlvals[:-1], self.nlvals, self.nlvals[1:])).T
@@ -547,7 +539,7 @@ class RMWS(object):
 				notoptimal = False  
 				finalField = self.normalize_with_innerField(curhomogfield)
 				print('\n Too small improvements in last %i consecutive iterations! --> Take current best solution!'%badcount)
-		
+
 		return finalField, args
 
 	def dofftint(self, usf, x):

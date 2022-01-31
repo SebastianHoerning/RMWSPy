@@ -2,9 +2,7 @@ import os
 import sys
 import numpy as np
 import scipy.stats as st
-fpth = os.path.abspath(os.path.join('..', 'rmwspy'))
-sys.path.append(fpth)
-from random_mixing_whittaker_shannon import *
+from RMWSPy.rmwspy.random_mixing_whittaker_shannon import *
 
 class CMLModel(NonLinearProblemTemplate):
 	def __init__(self, data, marginal, cmllinks):
