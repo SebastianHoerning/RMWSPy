@@ -152,7 +152,7 @@ kh_obswell = np.load(r'well_kh.npy')
 
 # fit marginal
 dist_par = st.lognorm.fit(kh_obswell)
-
+dist_par = (dist_par[0], 0.0, dist_par[2]) # avoid potential negative numbers
 # transform observations to standard normal using the fitted cdf;
 cv = st.norm.ppf(st.lognorm.cdf(kh_obswell, dist_par[0], loc=dist_par[1], scale=dist_par[2]))
 vcdfinv = None
@@ -198,8 +198,8 @@ CS = RMWS(my_model,
 		 cp = obswell,
 		 cv = cv,
 		 optmethod = 'circleopt',
-		 minObj = 0.2,    
-		 maxiter = 10,
+		 minObj = 0.05,    
+		 maxiter = 20,
 		 p_on_circle=p_on_circle
 		 )
 
@@ -237,6 +237,17 @@ for i in range(nfields):
 	nlvals_at_x = CS.get_at_cond_locations(nlfield_at_x, obswell)
 	h_at_wells.append(nlvals_at_x)
 
+	plt.figure()
+	plt.imshow(kh_fields[i], origin='lower',
+					interpolation='nearest',
+					cmap='jet',
+					vmin=0,
+					vmax=13)
+	plt.colorbar()
+	plt.savefig(r'kh_{}.png'.format(i))
+	plt.clf()
+	plt.close()
+
 h_fields = np.array(h_fields)
 h_at_wells = np.array(h_at_wells)
 
@@ -268,7 +279,9 @@ fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12,5))
 img1 = axs[0].imshow(meanfield,
 					 origin='lower',
 					 interpolation='nearest',
-					 cmap='jet')
+					 cmap='jet',
+					 vmin=0,
+					 vmax=13)
 axs[0].plot(obswell[:,1],obswell[:,0],'x',c='black')
 axs[0].set_title("mean field")
 divider1 = make_axes_locatable(axs[0])
@@ -278,7 +291,9 @@ cbar1 = plt.colorbar(img1, cax=cax1)
 img2 = axs[1].imshow(stdfield,
 					 origin='lower',
 					 interpolation='nearest',
-					 cmap='Reds'
+					 cmap='Reds',
+					 vmin=0,
+					 vmax=5
 					 )
 axs[1].plot(obswell[:,1], obswell[:,0], 'x', c='black')
 axs[1].set_title("standard deviation field")
@@ -337,6 +352,16 @@ plt.savefig(r'reality_h.png')
 plt.clf()
 plt.close()
 
+meanfield = np.mean(kh_fields, axis=0)
+stdfield = np.std(kh_fields, axis=0)
+relstd = stdfield/meanfield
+plt.figure()
+plt.imshow(relstd, interpolation='nearest', origin='lower', cmap='jet', vmin=0, vmax=1.0)
+plt.plot(obswell[:,1], obswell[:,0], 'x', c='black')
+plt.colorbar()
+plt.savefig(r'relstd.png')
+plt.clf()
+plt.close()
 
 
 

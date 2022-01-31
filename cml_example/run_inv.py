@@ -29,11 +29,11 @@ paperstyle_plot = False
 #--------------
 # define start and end time step
 # 543 is the time step used in the paper
-start_time_idx = 541
-end_time_idx = 542
+# start_time_idx = 541
+# end_time_idx = 542
 
-# start_time_idx = 543
-# end_time_idx = 544
+start_time_idx = 543
+end_time_idx = 544
 
 # get path to input_data
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -115,13 +115,13 @@ for tstep in range(start_time_idx, end_time_idx):
 	kde.fit(x[:, None])
 
 	# build cdf and invcdf from pdf
-	xx = np.arange(x.min() - 1., x.max() + 1., 0.001)
+	xx = np.arange(x.min() - 4., x.max() + 1., 0.001)
 	logprob = np.exp(kde.score_samples(xx[:, None]))
 	cdf_ = np.cumsum(logprob) * 0.001
 	cdf_ = np.concatenate(([0.0], cdf_))
 	cdf_ = np.concatenate((cdf_, [1.0]))
 	xx = np.concatenate((xx, [x.max() + 1.]))
-	xx = np.concatenate(([x.min() - 1.], xx))
+	xx = np.concatenate(([x.min() - 4.], xx))
 	cdf = interpolate.interp1d(xx, cdf_)
 	invcdf = interpolate.interp1d(cdf_, xx)
 

@@ -18,6 +18,7 @@ Coal_Multilayer_NO_sch2.csv
 **/*.sr3
 **/*.mrf
 **/*.png
+**/*.json
 NERAmodels2/
 surfmove _calc.py
 fromgeomodel.txt

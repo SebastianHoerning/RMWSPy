@@ -85,7 +85,7 @@ class GWModel(NonLinearProblemTemplate):
 	
 		# Run the simulation
 		success, buff = self.MF['sim'][i].run_simulation(silent=True)
-		assert success, 'mf6 model did not run'
+		assert success, 'mf6 model did not run. check folder {}'.format(i)
 
 		hds = flopy.utils.HeadFile(os.path.join(self.MF['ws'][i], self.headfile))
 		nlfield_at_x = hds.get_data()[0]
