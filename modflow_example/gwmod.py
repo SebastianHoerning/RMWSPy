@@ -10,9 +10,7 @@ import os
 import sys
 import numpy as np
 import scipy.stats as st
-fpth = os.path.abspath(os.path.join('..', 'rmwspy'))
-sys.path.append(fpth)
-from random_mixing_whittaker_shannon import *
+from RMWSPy.rmwspy import *
 from concurrent.futures import ThreadPoolExecutor
 
 try:
@@ -32,7 +30,7 @@ try:
 	Release, 15 December 2019, http://dx.doi.org/10.5066/F7BK19FH
 	'''
 except:
-	# CHANGE THIS PATH
+	# CHANGE THIS PATH TO YOUR FLOPY INSTALLATION IF IT IS NOT IN YOUR PYTHONPATH
 	fpth = os.path.abspath(os.path.join(r'C:\Users\uqshoern\Documents\transport_random_mixing'))
 	sys.path.append(fpth)
 	import flopy

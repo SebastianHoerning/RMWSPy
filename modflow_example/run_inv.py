@@ -16,7 +16,7 @@ import matplotlib.pylab as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import scipy.interpolate as interpolate
 from gwmod import *
-import gcopula_sparaest as sparest
+import RMWSPy.rmwspy.gcopula_sparaest as sparest
 
 # use random seed if you want to ensure reproducibility
 np.random.seed(123)
