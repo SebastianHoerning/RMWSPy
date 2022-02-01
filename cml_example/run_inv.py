@@ -29,11 +29,9 @@ paperstyle_plot = False
 #--------------
 # define start and end time step
 # 543 is the time step used in the paper
-# start_time_idx = 541
-# end_time_idx = 542
+start_time_idx = 541
+end_time_idx = 542
 
-start_time_idx = 543
-end_time_idx = 544
 
 # get path to input_data
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -141,32 +139,31 @@ for tstep in range(start_time_idx, end_time_idx):
 	covmods = ['Mat', 'Exp', 'Sph',]     # covariance function that will be tried for the fitting
 	ntries = 6                                  # number of tries per covariance function with random subsets
 
-	# cmods = sparest.paraest_multiple_tries(np.copy(p_xy),
-	# 									   u,
-	# 									   ntries = [ntries, ntries],
-	# 									   n_in_subset = 5,               # number of values in subsets
-	# 									   neighbourhood = 'nearest',     # subset search algorithm
-	# 									   covmods = covmods,             # covariance functions
-	# 									   outputfile = outputfile)       # store all fitted models in an output file
+	cmods = sparest.paraest_multiple_tries(np.copy(p_xy),
+										   u,
+										   ntries = [ntries, ntries],
+										   n_in_subset = 5,               # number of values in subsets
+										   neighbourhood = 'nearest',     # subset search algorithm
+										   covmods = covmods,             # covariance functions
+										   outputfile = outputfile)       # store all fitted models in an output file
 
-	# # take the copula model with the highest likelihood
-	# # reconstruct from parameter array
-	# likelihood = -666
-	# for model in range(len(cmods)):
-	# 	for tries in range(ntries):
-	# 		if cmods[model][tries][1]*-1. > likelihood:
-	# 			likelihood = cmods[model][tries][1]*-1.
-	# 			cmod = '0.01 Nug(0.0) + 0.99 %s(%1.3f)'%(covmods[model], cmods[model][tries][0][0])
-	# 			if covmods[model] == 'Mat':
-	# 				cmod += '^%1.3f'%(cmods[model][tries][0][1])
+	# take the copula model with the highest likelihood
+	# reconstruct from parameter array
+	likelihood = -666
+	for model in range(len(cmods)):
+		for tries in range(ntries):
+			if cmods[model][tries][1]*-1. > likelihood:
+				likelihood = cmods[model][tries][1]*-1.
+				cmod = '0.01 Nug(0.0) + 0.99 %s(%1.3f)'%(covmods[model], cmods[model][tries][0][0])
+				if covmods[model] == 'Mat':
+					cmod += '^%1.3f'%(cmods[model][tries][0][1])
 
-	cmod = '1.0 Mat(60)^1.0'
-	# print (cmod)
+	print (cmod)
  
 	# SIMULATION USING RMWSPy
 	#------------------------
 	# number of conditional fields to be simulated
-	nfields = 4
+	nfields = 20
 
 	# marginal distribution variables
 	marginal = {}
@@ -188,7 +185,7 @@ for tstep in range(start_time_idx, end_time_idx):
 			 optmethod = 'circleopt',
 			 minObj = 0.4,
 			 maxbadcount= 20,    
-			 maxiter = 4,
+			 maxiter = 250,
 			 )
 
 	# run RMWS
