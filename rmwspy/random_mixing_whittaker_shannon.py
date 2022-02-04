@@ -558,7 +558,7 @@ class RMWS(object):
 		norig = (n + 2)/3 
 		if norig % 2 != 0:
 			raise ValueError('Input must be even!')
-		horst = np.int(usf * (norig-1))
+		horst = int(usf * (norig-1))
 		ans = ans[horst:horst+horst+1]
 
 		return ans
