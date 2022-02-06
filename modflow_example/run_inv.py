@@ -7,6 +7,7 @@
 #			   The University of Queensland, Brisbane, QLD, Australia
 #-------------------------------------------------------------------------------
 import os
+import shutil
 import sys
 import datetime
 import numpy as np
@@ -16,7 +17,7 @@ import matplotlib.pylab as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import scipy.interpolate as interpolate
 from gwmod import *
-import gcopula_sparaest as sparest
+import RMWSPy.rmwspy.gcopula_sparaest as sparest
 
 # use random seed if you want to ensure reproducibility
 np.random.seed(123)
@@ -28,9 +29,8 @@ if not os.path.exists('temp'):
 # example name
 nm = 'gw_inv'
 
+# modflow6
 '''
-define executable names and path to file
-add path to MODFLOW executable
 MODFLOW reference:
 Langevin, C.D., Hughes, J.D., Banta, E.R., Provost, A.M., 
 Niswonger, R.G., and Panday, Sorab, 2019, 
@@ -39,11 +39,18 @@ U.S. Geological Survey Software Release, 12 December 2019,
 https://doi.org/10.5066/F76Q1VQV
 '''
 
-exe_loc = r'C:\Users\uqshoern\Documents\transport_random_mixing\bin' # CHANGE THIS PATH
-mfexe = 'mf6.exe'
-mfexe = os.path.join(exe_loc, mfexe)
+# check if modflow6 is in path
+if shutil.which('mf6') is None:
+	print('MF6 executable is not in your path variable!')
+	print('Either add it to your path or point the exe_loc to a local installation!')
+
+	exe_loc = r'C:\Users\uqshoern\Documents\transport_random_mixing\bin' # CHANGE THIS PATH TO POINT TO YOUR MF6 EXECUTABLE
+	mfexe = 'mf6.exe'
+	mfexe = os.path.join(exe_loc, mfexe)
+else:
+	mfexe = 'mf6.exe'
 	
-# defines the number of points on the circle
+# define the number of points on the circle
 # HAS TO BE AN EVEN NUMBER
 p_on_circle = 8
 

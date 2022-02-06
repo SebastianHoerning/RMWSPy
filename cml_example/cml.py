@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 import scipy.stats as st
-from RMWSPy.rmwspy.random_mixing_whittaker_shannon import *
+from RMWSPy.rmwspy import *
 
 class CMLModel(NonLinearProblemTemplate):
 	def __init__(self, data, marginal, cmllinks):
