@@ -62,9 +62,9 @@ class RMWS(object):
 				 nFields=10,                # number of fields to simulate
 				 cp=None,                   # conditioning point coordinates
 				 cv=None,                   # conditioning point values
-				 le_cp=None,                # <= inequality conditioning point coordinates
-				 le_cv=None,                # <= inequality conditioning point values
-				 ge_cp=None,                # >= inequality conditioning point coordinates
+				 le_cp=None,                # <= inequality conditioning point coordinates as an array
+				 le_cv=None,                # <= inequality conditioning point values as an array
+				 ge_cp=None,                # >= inequality conditioning point coordinates as an array
 				 ge_cv=None,                # >= inequality conditioning point values                 
 				 optmethod='no_nl_constraints', # optimization method: 'circleopt' or 'no_nl_constraints'
 				 p_on_circle=8,				# discretization for the circle
@@ -73,7 +73,10 @@ class RMWS(object):
 				 maxbadcount=10,            # max number of consecutive iteration with less than frac_imp -> stopping criteria
 				 frac_imp=0.9975,           # 0.25%
 				 anisotropy=False,			# requires tuple (scale 0, scale 1,...., scale n, rotate 0, rotate 1,..., rotate n-1)
-				 sim_method='fftma'			# fftma or specsim for unconditional field simulation
+				 sim_method='fftma',		# fftma or specsim for unconditional field simulation
+				 save_uncondfields = False,	# filename to save uncondfields as npy file - FOR TESTING ONLY
+				 load_uncondfields = False,	# filename to load uncondfields from npy file - FOR TESTING ONLY
+				 norm_threshold = 0.1		# Threshold for norm_inner
 				 ):
 
 		if nonlinearproblem is None:
@@ -98,6 +101,9 @@ class RMWS(object):
 		self.frac_imp = frac_imp
 		self.p_on_circle = p_on_circle
 		self.anisotropy = anisotropy
+		self.save_uncon = save_uncondfields	
+		self.load_uncon = load_uncondfields	
+		self.norm_threshold = norm_threshold
 
 		if cp is None:
 			if len(self.domainsize) == 3:
@@ -155,11 +161,26 @@ class RMWS(object):
 			self.uncondsim = Specsim.spectral_random_field(domainsize=self.domainsize, covmod=self.covmod)     
 
 		# simulate unconditional fields	
-		self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
-		for i in range(self.n_uncondFields[0]):
-			s = self.uncondsim.simnew()
-			s = (s - s.mean())/np.std(s)
-			self.uncondFields[i] = s
+		if self.load_uncon:
+			try:
+				if not self.load_uncon.endswith(".npy"):
+					self.load_uncon =self.load_uncon + '.npy'
+				self.uncondFields = np.load(self.load_uncon)
+				self.n_uncondFields = [self.uncondFields.shape[0]]
+				print("unconditional fields")
+			except:
+				print("{} does not exist, generating new set of unconditional fields".format())
+				self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
+				for i in range(self.n_uncondFields[0]):
+					s = self.uncondsim.simnew()
+					s = (s - s.mean())/np.std(s)
+					self.uncondFields[i] = s
+		else:
+			self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
+			for i in range(self.n_uncondFields[0]):
+				s = self.uncondsim.simnew()
+				s = (s - s.mean())/np.std(s)
+				self.uncondFields[i] = s
 
 		self.n_inc_fac = int(np.max([5,(self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0])/2.]))
 
@@ -186,9 +207,7 @@ class RMWS(object):
 	def __call__(self,):		
 		# loop over number of required conditional fields
 		for simno in range(0, self.nFields):
-
 			print(simno)
-
 			# if inequalities are present -> replace them by equalities
 			# using MCMC (Metropolis-Hastings Random Walk, MHRW_inequality)
 			if ((self.le_cp.shape[0] != 0) | (self.ge_cp.shape[0] != 0)):
@@ -304,15 +323,14 @@ class RMWS(object):
 	def find_low_norm_weights(self,):
 		# number of fields used when minimizing norm
 		n = self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0] 
-
 		norm_inner = 666
-		while norm_inner > 0.1:
-
+		while norm_inner > self.norm_threshold:
 			# increase number of fields used
 			n += self.n_inc_fac
 
 			if n > self.n_uncondFields[0]:				
 				ix,jx = self.add_uncondFields(nF=[500])       
+			
 			
 			selectedFields = self.uncondFields[self.random_index(self.ix, n)]
 			A = self.get_at_cond_locations(selectedFields, self.cp_total)
@@ -345,7 +363,8 @@ class RMWS(object):
 		jx = np.arange(self.jx.max()+1,self.jx.max()+1+nF[0])
 		np.random.shuffle(jx)
 		self.jx = np.concatenate((self.jx, jx))
-
+		if self.save_uncon:
+			np.save(self.save_uncon,self.uncondFields)
 		return (ix, jx)
 
 	def generate_indicies(self,):
