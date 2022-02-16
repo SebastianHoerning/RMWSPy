@@ -167,9 +167,9 @@ class RMWS(object):
 					self.load_uncon =self.load_uncon + '.npy'
 				self.uncondFields = np.load(self.load_uncon)
 				self.n_uncondFields = [self.uncondFields.shape[0]]
-				print("unconditional fields")
+				print("Unconditional fields loaded from {}".format(self.load_uncon))
 			except:
-				print("{} does not exist, generating new set of unconditional fields".format())
+				print("{} does not exist, generating new set of unconditional fields".format(self.load_uncon))
 				self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 				for i in range(self.n_uncondFields[0]):
 					s = self.uncondsim.simnew()
