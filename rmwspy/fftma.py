@@ -10,6 +10,8 @@
 
 import numpy as np
 import sys
+
+from pandas import cut
 from . import covariancefunction as covfun
 import scipy
 import scipy.stats as st
@@ -36,8 +38,11 @@ class FFTMA(object):
 		if not self.periodic:
 			cutoff = covfun.find_maximum_range(covmod)
 			cutoffs = []
-			for dim in domainsize:
-				tsize = dim + cutoff
+			for i, dim in enumerate(domainsize):
+				if self.anisotropy == False:
+					tsize = dim + cutoff
+				else:
+					tsize = dim + cutoff * self.anisotropy[i]
 				# find closest multiple of 8 that is larger than tsize
 				m8 = int(np.ceil(tsize/8.)*8.)
 				cutoffs.append(m8 - dim)
