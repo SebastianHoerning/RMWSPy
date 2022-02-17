@@ -181,7 +181,7 @@ class RMWS(object):
 					s = (s - s.mean())/np.std(s)
 					self.uncondFields[i] = s
 					if not self.silent:
-						print("   {}% complete".format(np.round(100*i/self.n_uncondFields[0],2)), end="\r")
+						print("{:9.2f}% complete".format(100*i/self.n_uncondFields[0]), end="\r")
 		else:
 			if not self.silent:
 				print("Generating new set of unconditional fields")
@@ -191,7 +191,7 @@ class RMWS(object):
 				s = (s - s.mean())/np.std(s)
 				self.uncondFields[i] = s
 				if not self.silent:
-					print("   {}% complete".format(np.round(100*i/self.n_uncondFields[0],2)), end="\r")
+					print("{:9.2f}% complete".format(100*i/self.n_uncondFields[0]), end="\r")
 
 		self.n_inc_fac = int(np.max([5,(self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0])/2.]))
 
@@ -367,7 +367,7 @@ class RMWS(object):
 			s = self.uncondsim.simnew()
 			addField[i] = (s - s.mean())/s.std()
 			if not self.silent:
-				print("   {}% complete".format(np.round(100*i/nF[0],2)), end="\r")
+				print("{:9.2f}% complete".format(100*i/nF[0],2), end="\r")
 		# add the new fields to the old ones
 		self.uncondFields = np.concatenate((self.uncondFields,addField))
 		# update self.n_uncondFields
