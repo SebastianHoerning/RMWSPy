@@ -76,7 +76,8 @@ class RMWS(object):
 				 sim_method='fftma',		# fftma or specsim for unconditional field simulation
 				 save_uncondfields = False,	# filename to save uncondfields as npy file - FOR TESTING ONLY
 				 load_uncondfields = False,	# filename to load uncondfields from npy file - FOR TESTING ONLY
-				 norm_threshold = 0.1		# Threshold for norm_inner
+				 norm_threshold = 0.1,		# Threshold for norm_inner
+				 silent = False				# Suppress all print statments
 				 ):
 
 		if nonlinearproblem is None:
@@ -104,6 +105,7 @@ class RMWS(object):
 		self.save_uncon = save_uncondfields	
 		self.load_uncon = load_uncondfields	
 		self.norm_threshold = norm_threshold
+		self.silent =silent
 
 		if cp is None:
 			if len(self.domainsize) == 3:
@@ -152,7 +154,8 @@ class RMWS(object):
 		# only fftma can handle anisotropy
 		if self.anisotropy != False:
 			if sim_method == 'specsim':
-				print('Unconditional simulation method changed to FFTMA to incorporate anisotropy!')
+				if not self.silent:
+					print('Unconditional simulation method changed to FFTMA to incorporate anisotropy!')
 				sim_method = 'fftma'
 
 		if sim_method == 'fftma':
@@ -167,20 +170,28 @@ class RMWS(object):
 					self.load_uncon =self.load_uncon + '.npy'
 				self.uncondFields = np.load(self.load_uncon)
 				self.n_uncondFields = [self.uncondFields.shape[0]]
-				print("Unconditional fields loaded from {}".format(self.load_uncon))
+				if not self.silent:
+					print("Unconditional fields loaded from {}".format(self.load_uncon))
 			except:
-				print("{} does not exist, generating new set of unconditional fields".format(self.load_uncon))
+				if not self.silent:
+					print("{} does not exist, generating new set of unconditional fields".format(self.load_uncon))
 				self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 				for i in range(self.n_uncondFields[0]):
 					s = self.uncondsim.simnew()
 					s = (s - s.mean())/np.std(s)
 					self.uncondFields[i] = s
+					if not self.silent:
+						print("   {}% complete".format(np.round(100*i/self.n_uncondFields[0],2)), end="\r")
 		else:
+			if not self.silent:
+				print("Generating new set of unconditional fields")
 			self.uncondFields = np.empty(self.n_uncondFields + self.domainsize, dtype=('float32')) 
 			for i in range(self.n_uncondFields[0]):
 				s = self.uncondsim.simnew()
 				s = (s - s.mean())/np.std(s)
 				self.uncondFields[i] = s
+				if not self.silent:
+					print("   {}% complete".format(np.round(100*i/self.n_uncondFields[0],2)), end="\r")
 
 		self.n_inc_fac = int(np.max([5,(self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0])/2.]))
 
@@ -207,7 +218,8 @@ class RMWS(object):
 	def __call__(self,):		
 		# loop over number of required conditional fields
 		for simno in range(0, self.nFields):
-			print(simno)
+			if not self.silent:
+				print(simno)
 			# if inequalities are present -> replace them by equalities
 			# using MCMC (Metropolis-Hastings Random Walk, MHRW_inequality)
 			if ((self.le_cp.shape[0] != 0) | (self.ge_cp.shape[0] != 0)):
@@ -306,7 +318,8 @@ class RMWS(object):
 			
 			self.finalFields.append(finalField)
 		self.finalFields = np.array(self.finalFields)
-		print('\n Simulation terminated!')
+		if not self.silent:
+			print('\n Simulation terminated!')
 
 	def random_index(self, inds, n):
 		return inds[:n]
@@ -348,9 +361,13 @@ class RMWS(object):
 
 	def add_uncondFields(self,nF=[100]):	
 		addField = np.empty(nF + self.domainsize, dtype=('float32'))
+		if not self.silent:
+			print("Adding {} additional unconditional fields".format(nF=[0]))
 		for i in range(nF[0]):
 			s = self.uncondsim.simnew()
 			addField[i] = (s - s.mean())/s.std()
+			if not self.silent:
+				print("   {}% complete".format(np.round(100*i/nF[0],2)), end="\r")
 		# add the new fields to the old ones
 		self.uncondFields = np.concatenate((self.uncondFields,addField))
 		# update self.n_uncondFields
@@ -516,7 +533,8 @@ class RMWS(object):
 			# check shape of returned objective function values
 			assert len(curobj) == 1, ('Objective function needs to return ONE value only!')
 
-			print('\r', curobj, end='')
+			if not self.silent:
+				print('\r', curobj, end='')
 			sys.stdout.flush()
 
 			if curobj < obj:
@@ -545,18 +563,21 @@ class RMWS(object):
 			if obj < nlargs.objmin:
 				notoptimal = False  
 				finalField = self.normalize_with_innerField(curhomogfield)
-				print('\n Defined minimum objective function value reached!')
+				if not self.silent:
+					print('\n Defined minimum objective function value reached!')
 
 			# check if we need too many iterations and stop after maxiter
 			elif nlargs.counter == self.maxiter:
 				notoptimal = False  
 				finalField = self.normalize_with_innerField(curhomogfield)
-				print('\n Number of max model runs exceeded! --> Take current best solution!')
+				if not self.silent:
+					print('\n Number of max model runs exceeded! --> Take current best solution!')
 
 			elif badcount >= self.maxbadcount:
 				notoptimal = False  
 				finalField = self.normalize_with_innerField(curhomogfield)
-				print('\n Too small improvements in last %i consecutive iterations! --> Take current best solution!'%badcount)
+				if not self.silent:
+					print('\n Too small improvements in last %i consecutive iterations! --> Take current best solution!'%badcount)
 
 		return finalField, args
 
