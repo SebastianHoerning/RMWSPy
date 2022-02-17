@@ -182,6 +182,8 @@ class RMWS(object):
 					self.uncondFields[i] = s
 					if not self.silent:
 						print("{:9.2f}% complete".format(100*i/self.n_uncondFields[0]), end="\r")
+				if self.save_uncon:
+					np.save(self.save_uncon,self.uncondFields)
 		else:
 			if not self.silent:
 				print("Generating new set of unconditional fields")
@@ -192,7 +194,8 @@ class RMWS(object):
 				self.uncondFields[i] = s
 				if not self.silent:
 					print("{:9.2f}% complete".format(100*i/self.n_uncondFields[0]), end="\r")
-
+			if self.save_uncon:
+				np.save(self.save_uncon,self.uncondFields)
 		self.n_inc_fac = int(np.max([5,(self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0])/2.]))
 
 		# if inequalities -> calculate conditional covariance matrix and
@@ -362,7 +365,7 @@ class RMWS(object):
 	def add_uncondFields(self,nF=[100]):	
 		addField = np.empty(nF + self.domainsize, dtype=('float32'))
 		if not self.silent:
-			print("Adding {} additional unconditional fields".format(nF=[0]))
+			print("Adding {} additional unconditional fields".format(nF[0]))
 		for i in range(nF[0]):
 			s = self.uncondsim.simnew()
 			addField[i] = (s - s.mean())/s.std()
