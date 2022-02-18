@@ -8,9 +8,9 @@
 #                          The University of Queensland, Brisbane, QLD, Australia
 #-------------------------------------------------------------------------------
 
+from concurrent.futures import thread
 import numpy as np
 import sys
-
 from pandas import cut
 from . import covariancefunction as covfun
 import scipy
@@ -18,6 +18,11 @@ import scipy.stats as st
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.patches as patches
+try:
+	import pyfftw
+	fastfft = True
+except:
+	fastfft = False
 
 class FFTMA(object):
 	def __init__(self,
@@ -26,6 +31,7 @@ class FFTMA(object):
 				 anisotropy = False, 	# requires tuple (scale 0, scale 1,...., scale n, rotate 0, rotate 1,..., rotate n-1)
 				 						# note that scale is relative to range defined in covmod
 				 periodic   = False,
+				 fastfft	= fastfft
 				 ):
 
 		self.counter = 0
@@ -70,9 +76,16 @@ class FFTMA(object):
 		else:
 			self.apply_anisotropy()
 
+		if fastfft:
+			print('pyFFTW selected!')
+			self.rng = np.random.default_rng()
+			self.simnew = self.simnewpyfftw
+		else:			
+			self.simnew = self.simnewnp
+
 		self.Y = self.simnew()
 
-	def simnew(self):
+	def simnewnp(self):
 		self.counter += 1
 		# normal random numbers
 		u = np.random.standard_normal(size=self.sqrtFFTQ.shape)
@@ -82,6 +95,27 @@ class FFTMA(object):
 		GU = self.sqrtFFTQ * U
 		# create field using inverse fft
 		self.Y = np.real(np.fft.ifftn(GU)) 
+
+		if not self.periodic:
+			# readjust domainsize to correct size (--> no boundary effects...)
+			gridslice = [slice(0,(self.domainsize.squeeze()-self.cutoff)[i],1)
+													  for i in range(self.ndim)]
+			self.Y = self.Y[tuple(gridslice)]
+			self.Y = self.Y.reshape(self.domainsize.squeeze()-self.cutoff)
+
+		return self.Y
+
+	def simnewpyfftw(self):
+		self.counter += 1
+		# normal random numbers
+		# u = np.random.standard_normal(size=self.sqrtFFTQ.shape)
+		u = self.rng.standard_normal(size=self.sqrtFFTQ.shape)
+		# fft of normal random numbers
+		U = pyfftw.interfaces.numpy_fft.fftn(u, threads=4)
+		# combine with covariance 
+		GU = self.sqrtFFTQ * U
+		# create field using inverse fft
+		self.Y = np.real(pyfftw.interfaces.numpy_fft.ifftn(GU, threads=4)) 
 
 		if not self.periodic:
 			# readjust domainsize to correct size (--> no boundary effects...)
