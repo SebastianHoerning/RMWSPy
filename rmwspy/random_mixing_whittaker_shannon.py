@@ -361,6 +361,8 @@ class RMWS(object):
 			# but it only works for equalities, thats why we had to transform
 			# the inequalities in advance
 			norm_inner = np.sum((c/S)**2)
+			if not self.silent:
+				print(norm_inner)
 		s = np.sum((c/S)*V.T[:,:S.shape[0]],axis=1)
 		return (s, norm_inner, n)
 
