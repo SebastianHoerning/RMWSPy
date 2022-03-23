@@ -162,7 +162,7 @@ class RMWS(object):
 			s = (s - s.mean())/np.std(s)
 			self.uncondFields[i] = s
 
-		self.n_inc_fac = int(np.max([5,(self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0])/2.]))
+		self.n_inc_fac = int(np.max([5, (self.cp.shape[0] + self.le_cp.shape[0] + self.ge_cp.shape[0]) * 2]))
 
 		# if inequalities -> calculate conditional covariance matrix and
 		# conditional mean which are necessary to calculate the conditional 
